@@ -17,7 +17,7 @@
 /* USER CODE END includes */
 
 / {
-	model = "STMicroelectronics STM32MP157C-DK2 STM32CubeMX board";
+	model = "STM32MP157C NS02 board";
 	compatible = "st,stm32mp157c-ns02", "st,stm32mp157";
 
 	memory@c0000000 {
