@@ -221,6 +221,12 @@ config BUILD_ROM
 	  which are not shipped in the U-Boot source tree.
 	  Please, see doc/README.x86 for details.
 
+config NSXX_TARGET
+	bool "Enable support for the NS02 and NSxx target boards"
+	help
+	 Say Y here to support the Exor NS02 Nanosom and 
+	 other NSxx Nanosom boards.
+	 
 endmenu		# General setup
 
 menu "Boot images"
