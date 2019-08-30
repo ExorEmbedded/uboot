@@ -206,4 +206,17 @@
 #endif /* ifndef CONFIG_SPL_BUILD */
 #endif /* ifdef CONFIG_DISTRO_DEFAULTS*/
 
+/*****************************************************************************/
+/*****************************************************************************/
+/* NSXX specific configuration setup                                         */
+/*****************************************************************************/
+/*****************************************************************************/
+#ifdef CONFIG_NSXX_TARGET
+
+/*
+ * Bootcounter support
+ */
+#define CONFIG_SYS_I2C_RTC_ADDR 0x68
+
+#endif /* #ifdef CONFIG_NSXX_TARGET */
 #endif /* __CONFIG_H */
