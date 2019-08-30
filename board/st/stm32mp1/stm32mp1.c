@@ -70,6 +70,45 @@ DECLARE_GLOBAL_DATA_PTR;
 #define USB_START_LOW_THRESHOLD_UV	1230000
 #define USB_START_HIGH_THRESHOLD_UV	2100000
 
+#ifdef CONFIG_NSXX_TARGET
+#define NS02EK435_VAL    143
+
+/*
+ * Read I2C SEEPROM infos and set env. variables accordingly
+ */
+static int read_eeprom(void)
+{
+#if (defined(CONFIG_CMD_I2CHWCFG))  
+  extern int i2cgethwcfg (void);
+  return i2cgethwcfg();
+#endif
+  return 0;
+}
+
+/*
+ * Reads the hwcfg.txt file from USB stick (root of FATFS partition) if any, parses it
+ * and updates the environment variable accordingly.
+ * 
+ * NOTE: This function is used in case the I2C SEEPROM contents are not valid, in order to get
+ *       a temporary and volatile HW configuration from USB to boot properly Linux (even if the I2C SEEPROM is not programmed) 
+ */
+static int USBgethwcfg(void)
+{
+#if (defined(CONFIG_CMD_I2CHWCFG))  
+  printf("Trying to get the HW cfg from USB stick...\n");
+  
+  run_command("usb stop", 0);
+  run_command("usb reset", 0);
+  run_command("setenv filesize 0", 0);
+  run_command("fatload usb 0 ${loadaddr} hwcfg.txt", 0);
+  run_command("env import -t ${loadaddr} ${filesize}", 0);
+  run_command("usb stop", 0);
+#endif  
+  return 0;
+}
+#endif /* #ifdef CONFIG_NSXX_TARGET */
+
+
 int checkboard(void)
 {
 	int ret;
@@ -168,21 +207,58 @@ bool board_is_dk2(void)
 
 int board_late_init(void)
 {
+#if (defined(CONFIG_CMD_I2CHWCFG))  
+  char* tmp;
+  unsigned long hwcode = 0;
+#endif
+  
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-	const void *fdt_compat;
-	int fdt_compat_len;
-
-	fdt_compat = fdt_getprop(gd->fdt_blob, 0, "compatible",
-				 &fdt_compat_len);
-	if (fdt_compat && fdt_compat_len) {
-		if (strncmp(fdt_compat, "st,", 3) != 0)
-			env_set("board_name", fdt_compat);
-		else
-			env_set("board_name", fdt_compat + 3);
-	}
+  const void *fdt_compat;
+  int fdt_compat_len;
+  
+  fdt_compat = fdt_getprop(gd->fdt_blob, 0, "compatible", &fdt_compat_len);
+  if (fdt_compat && fdt_compat_len) 
+  {
+	  if (strncmp(fdt_compat, "st,", 3) != 0)
+		  env_set("board_name", fdt_compat);
+	  else
+		  env_set("board_name", fdt_compat + 3);
+  }
 #endif
 
-	return 0;
+#if (defined(CONFIG_CMD_I2CHWCFG))
+  /* Get the system configuration from the I2C SEEPROM */
+  if(read_eeprom())
+  {
+	  printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
+	  USBgethwcfg();
+  }
+ 
+  /* Set the "board_name" env. variable according with the "hw_code" */
+  tmp = env_get("hw_code");
+  if(!tmp)
+  {
+    puts ("WARNING: 'hw_code' environment var not found!\n");
+  }
+  else
+    hwcode = (simple_strtoul (tmp, NULL, 10))&0xff;
+  
+  if(hwcode==NS02EK435_VAL)
+  {
+    env_set("board_name", "ns02_ek435"); 
+  }
+  else
+  {
+    puts ("WARNING: unknowm carrier hw code; using 'usom_undefined' board name. \n");
+    env_set("board_name", "usom_undefined");
+  }
+  /* Check if file $0030d8$.bin exists on the 1st partition of the SD-card and, if so, skips booting the mainOS */
+  run_command("setenv skipbsp1 0", 0);
+  run_command("mmc dev 0", 0);
+  run_command("mmc rescan", 0);
+  run_command("if test -e mmc 0:1 /$0030d8$.bin; then setenv skipbsp1 1; fi", 0);
+#endif    
+  return 0;
 }
 
 #ifdef CONFIG_STM32_SDMMC2

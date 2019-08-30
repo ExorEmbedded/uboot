@@ -456,6 +456,7 @@ static void setup_boot_mode(void)
  */
 static int setup_mac_address(void)
 {
+#if !defined(CONFIG_NSXX_TARGET)
 #if defined(CONFIG_NET)
 	int ret;
 	int i;
@@ -491,7 +492,7 @@ static int setup_mac_address(void)
 		pr_err("Failed to set mac address %pM from OTP: %d\n",
 		       enetaddr, ret);
 #endif
-
+#endif
 	return 0;
 }
 

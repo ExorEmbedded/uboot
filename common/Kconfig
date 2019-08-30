@@ -571,6 +571,12 @@ config BOARD_LATE_INIT
 	  So this config enable the late init code with the help of board_late_init
 	  function which should defined on respective boards.
 
+config CMD_I2CHWCFG	  
+	bool
+	depends on NSXX_FEATURES
+	help
+	  Add custom Exor support for system parameters stored in I2C eeprom.
+	  
 config DISPLAY_CPUINFO
 	bool "Display information about the CPU during start up"
 	default y if ARC|| ARM || NIOS2 || X86 || XTENSA || M68K

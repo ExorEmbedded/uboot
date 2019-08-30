@@ -218,5 +218,11 @@
  */
 #define CONFIG_SYS_I2C_RTC_ADDR 0x68
 
+/* Support for factory section in I2C SEEPROM */
+#define CONFIG_SYS_I2C_SPEED 100000
+#define CONFIG_CMD_I2CHWCFG
+#define CONFIG_SYS_I2C_EEPROM_ADDR 0x54
+#define DEF_SYS_I2C_ADPADD 0x56
+
 #endif /* #ifdef CONFIG_NSXX_TARGET */
 #endif /* __CONFIG_H */

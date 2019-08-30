@@ -57,6 +57,7 @@ obj-$(CONFIG_UPDATE_TFTP) += update.o
 obj-$(CONFIG_DFU_TFTP) += update.o
 obj-$(CONFIG_USB_KEYBOARD) += usb_kbd.o
 obj-$(CONFIG_CMDLINE) += cli_readline.o cli_simple.o
+obj-$(CONFIG_CMD_I2CHWCFG) += cmd_i2chwcfg.o
 
 endif # !CONFIG_SPL_BUILD
 
