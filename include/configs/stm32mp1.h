@@ -48,7 +48,17 @@
 /*
  * Env parameters
  */
+#ifdef CONFIG_NSXX_TARGET
+#define CONFIG_ENV_SIZE				SZ_8K
+#else
 #define CONFIG_ENV_SIZE				SZ_4K
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+#define CONFIG_ENV_OFFSET              (0)
+#define CONFIG_SYS_MMC_ENV_DEV         1 /* Environment in EMMC, BOOT2 partition */
+#define CONFIG_SYS_MMC_ENV_PART        2 
+#endif
 
 /* ATAGs */
 #define CONFIG_CMDLINE_TAG
