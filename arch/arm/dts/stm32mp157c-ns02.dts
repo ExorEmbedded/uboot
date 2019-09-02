@@ -98,6 +98,10 @@
 			pool;
 		};
 	};
+	
+	ns02_rst {
+          soft_rst_gpio = <&gpioz 5 GPIO_ACTIVE_HIGH>;
+	};
 
     regulators {
         compatible = "simple-bus";

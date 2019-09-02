@@ -74,6 +74,32 @@ DECLARE_GLOBAL_DATA_PTR;
 #define NS02EK435_VAL    143
 
 /*
+ * Specific NS02 board init sequences
+ */
+static void ns02_board_fixup(void)
+{
+	ofnode node;
+	struct gpio_desc soft_rst;
+	
+	/* Set to hi the soft_rst line */
+	node = ofnode_path("/ns02_rst");
+	if (!ofnode_valid(node)) 
+	{
+		printf("%s: WARNING!!! No ns02_rst node found.\n", __func__);
+		return;
+	}
+
+	if (gpio_request_by_name_nodev(node, "soft_rst_gpio", 0, &soft_rst, GPIOD_IS_OUT)) 
+	{
+		printf("%s: could not find soft_rst_gpio\n", __func__);
+		return;
+	}
+
+	if(dm_gpio_set_value(&soft_rst, 1))
+		printf("%s: can't set_value for soft_rst_gpio", __func__);
+}
+
+/*
  * Read I2C SEEPROM infos and set env. variables accordingly
  */
 static int read_eeprom(void)
@@ -888,6 +914,10 @@ int board_init(void)
 
 	if (IS_ENABLED(CONFIG_LED))
 		led_default_state();
+
+#ifdef CONFIG_NSXX_TARGET
+	ns02_board_fixup();
+#endif	
 
 #ifdef CONFIG_DM_REGULATOR
 	if (board_is_dk2())
