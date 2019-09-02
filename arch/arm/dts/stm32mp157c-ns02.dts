@@ -138,6 +138,17 @@
 			clock-frequency = <24000000>;
 		};
 	};
+	
+	usb_phy_tuning: usb-phy-tuning {
+		st,hs-dc-level = <2>;
+		st,fs-rftime-tuning;
+		st,hs-rftime-reduction;
+		st,hs-current-trim = <15>;
+		st,hs-impedance-trim = <1>;
+		st,squelch-level = <3>;
+		st,hs-rx-offset = <2>;
+		st,no-lsfs-sc;
+	};
 
 }; /*root*/
 
@@ -580,18 +591,31 @@
 	/* USER CODE END uart5 */
 };
 
-&usbh_ehci{
+&usbh_ehci {
+	phys = <&usbphyc_port0>;
+	phy-names = "usb";
 	status = "okay";
-
-	/* USER CODE BEGIN usbh_ehci */
-	/* USER CODE END usbh_ehci */
 };
 
-&usbh_ohci{
+&usbotg_hs {
+	dr_mode = "peripheral";
+	force-b-session-valid;
+	phys = <&usbphyc_port1 0>;
+	phy-names = "usb2-phy";
 	status = "okay";
+};
 
-	/* USER CODE BEGIN usbh_ohci */
-	/* USER CODE END usbh_ohci */
+&usbphyc {
+	vdd3v3-supply = <&vdd_usb>;
+	status = "okay";
+};
+
+&usbphyc_port0 {
+	st,phy-tuning = <&usb_phy_tuning>;
+};
+
+&usbphyc_port1 {
+	st,phy-tuning = <&usb_phy_tuning>;
 };
 
 /* USER CODE BEGIN addons */
