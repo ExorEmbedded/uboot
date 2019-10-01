@@ -72,6 +72,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_NSXX_TARGET
 #define NS02EK435_VAL    143
+#define NS02WU20_VAL     144
 
 /*
  * Specific NS02 board init sequences
@@ -272,6 +273,10 @@ int board_late_init(void)
   if(hwcode==NS02EK435_VAL)
   {
     env_set("board_name", "ns02_ek435"); 
+  }
+  else if(hwcode==NS02WU20_VAL)
+  {
+    env_set("board_name", "ns02_wu20"); 
   }
   else
   {
