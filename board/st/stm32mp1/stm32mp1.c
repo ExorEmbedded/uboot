@@ -27,6 +27,8 @@
 #include <jffs2/load_kernel.h>
 #include <power/regulator.h>
 #include <usb/dwc2_udc.h>
+#include <linux/iopoll.h>
+#include <asm/arch/sys_proto.h>
 
 /* SYSCFG registers */
 #define SYSCFG_BOOTR		0x00
@@ -73,6 +75,127 @@ DECLARE_GLOBAL_DATA_PTR;
 #ifdef CONFIG_NSXX_TARGET
 #define NS02EK435_VAL    143
 #define NS02WU20_VAL     144
+
+#define DEF_STPMIC1_ADDR 0x33
+#define STPMIC1_BUCK1_MAIN_CR 0x20
+/* Specific NS02 Pmic sequence: in this case we must use low level i2c access */
+int board_vddcore_set(u32 opp_voltage_mv)
+{
+	u32 value;
+	unsigned char reg;
+	int ret = 0;
+	
+
+	if (!opp_voltage_mv)
+		return 0;
+	
+	printf("NS02: set VDD=%d mV\n",opp_voltage_mv);
+
+	/* VDDCORE= STMPCI1 BUCK1 ramp=+25mV, 5 => 725mV, 36 => 1500mV */
+	value = ((opp_voltage_mv - 725) / 25) + 5;
+	if (value < 5)
+		value = 5;
+	if (value > 36)
+		value = 36;
+	
+	I2C_SET_BUS(1);
+	i2c_init(CONFIG_SYS_I2C_SPEED, DEF_STPMIC1_ADDR);
+	
+	reg = ((unsigned char)(value & 0x3f)) << 2;
+	reg |= 0x01;
+	if(i2c_write (DEF_STPMIC1_ADDR, STPMIC1_BUCK1_MAIN_CR, 1, &reg, 1))
+	{
+		printf("Error writing PMIC: failed to update VDDcore\n");
+		ret = -1;
+	}
+
+	I2C_SET_BUS(0);
+	return ret;
+}
+
+/* RCC registers for PLL1/MPU cfg */
+#define STM_RCCBASE      (0x50000000)
+#define RCC_PLL1CR       (STM_RCCBASE + 0x80)
+#define RCC_PLL1CFGR1    (STM_RCCBASE + 0x84)
+#define RCC_PLL1FRACR    (STM_RCCBASE + 0x8C)
+#define RCC_MPCKSELR     (STM_RCCBASE + 0x20)
+
+/* used for PLL1CR register */
+#define RCC_PLLNCR_PLLON    BIT(0)
+#define RCC_PLLNCR_PLLRDY   BIT(1)
+#define RCC_PLLNCR_DIVPEN   BIT(4)
+
+// used for RCC_PLL1CFGR1
+#define RCC_PLLNCFGR1_DIVN_MASK  GENMASK(8, 0)
+
+/* used forf MPCKSELR register */
+#define RCC_SELR_SRC_MASK  GENMASK(2, 0)
+#define RCC_SELR_SRCRDY    BIT(31)
+
+/* Values of RCC_MPCKSELR register */
+#define RCC_MPCKSELR_HSI 0
+#define RCC_MPCKSELR_PLL 2
+
+/* used for PLL1FRACR register */
+#define RCC_PLLNFRACR_FRACV_SHIFT 3
+#define RCC_PLLNFRACR_FRACV_MASK  GENMASK(15, 3)
+#define RCC_PLLNFRACR_FRACLE      BIT(16)
+/* 
+ * Set the MPU clock frequency to 800Mhz 
+ */
+int Set800MhzMPU(void)
+{
+	u32 val;
+	int ret;
+	
+	//Step1: Set MPCKSELR reg to select the HSIclk as CPU clock 
+	clrsetbits_le32(RCC_MPCKSELR, RCC_SELR_SRC_MASK, RCC_MPCKSELR_HSI & RCC_SELR_SRC_MASK); //Select HSI clk for CPU
+	ret = readl_poll_timeout(RCC_MPCKSELR, val, val & RCC_SELR_SRCRDY, 200000);             //Wait for ready
+	if (ret)
+	{
+		printf("Error updating MPU frequency: step1 ret=%d\n",ret);
+		return ret;
+	}
+	
+	//Step2: Stop PLL1
+	clrbits_le32(RCC_PLL1CR, RCC_PLLNCR_DIVPEN);                                           //PLL1 Poutput disable
+	clrbits_le32(RCC_PLL1CR, RCC_PLLNCR_PLLON);                                            //PLL1 stop
+	ret = readl_poll_timeout(RCC_PLL1CR, val, (val & RCC_PLLNCR_PLLRDY) == 0, 200000);     //Wait for PLL stopped
+	if (ret)
+	{
+		printf("Error updating MPU frequency: step2 ret=%d\n",ret);
+		return ret;
+	}
+	
+	//Step3: Set fractional part to 0
+	writel(0, RCC_PLL1FRACR);                                                              // Write into FRACV the new fractional value , and FRACLE to 0 
+	setbits_le32(RCC_PLL1FRACR, RCC_PLLNFRACR_FRACLE);                                     // Write FRACLE to 1 : FRACV value is loaded into the SDM 
+	
+	//Step4: Update Npll1 value to 0x63 to set 800Mhz MPU frequency
+	clrsetbits_le32(RCC_PLL1CFGR1, RCC_PLLNCFGR1_DIVN_MASK, 0x63 & RCC_PLLNCFGR1_DIVN_MASK);
+	
+	//Step5: Start PLL1
+	clrsetbits_le32(RCC_PLL1CR,	RCC_PLLNCR_DIVPEN, RCC_PLLNCR_PLLON);                      //Enable PLL1
+	ret = readl_poll_timeout(RCC_PLL1CR, val, (val & RCC_PLLNCR_PLLRDY), 200000);          //Wait for PLL1 locked
+	if (ret)
+	{
+		printf("Error updating MPU frequency: step3 ret=%d\n",ret);
+		return ret;
+	}
+	setbits_le32(RCC_PLL1CR, RCC_PLLNCR_DIVPEN);                                           //PLL1 Poutput enable
+	udelay(10);
+	
+	//Step6: Select PLL1 as MPU clock
+	clrsetbits_le32(RCC_MPCKSELR, RCC_SELR_SRC_MASK, RCC_MPCKSELR_PLL & RCC_SELR_SRC_MASK); //Select PLL1 clk for CPU
+	ret = readl_poll_timeout(RCC_MPCKSELR, val, val & RCC_SELR_SRCRDY, 200000);             //Wait for ready
+	if (ret)
+	{
+		printf("Error updating MPU frequency: step4 ret=%d\n",ret);
+		return ret;
+	}
+	
+	return 0;
+}
 
 /*
  * Specific NS02 board init sequences
@@ -237,6 +360,7 @@ int board_late_init(void)
 #if (defined(CONFIG_CMD_I2CHWCFG))  
   char* tmp;
   unsigned long hwcode = 0;
+  u32 f_800Mhz_mpu = 0;
 #endif
   
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
@@ -283,6 +407,24 @@ int board_late_init(void)
     puts ("WARNING: unknowm carrier hw code; using 'usom_undefined' board name. \n");
     env_set("board_name", "usom_undefined");
   }
+  
+  /* Set CPU frequency to 800Mhz, if target is allowed and CPU supports this 
+   */
+  f_800Mhz_mpu = 0;          // By default do not allow targets to run at 800Mhz
+  if(hwcode==NS02EK435_VAL)
+	  f_800Mhz_mpu = 1;      //EK435 target is allowed to run at 800Mhz
+  
+  if(f_800Mhz_mpu)           //If target is allowed to run at 800Mhz and CPU is capable of such speed...
+	  if(get_cpu_type() == CPU_STM32MP157Fxx) //...set MPU clk to 800Mhz
+	  {
+		  puts ("Set 800Mhz MPU clock.\n");
+		  if(! board_vddcore_set(1350))
+		  {
+			  udelay(10000);
+			  Set800MhzMPU();
+		  }
+	  }
+  
   /* Check if file $0030d8$.bin exists on the 1st partition of the SD-card and, if so, skips booting the mainOS */
   run_command("setenv skipbsp1 0", 0);
   run_command("mmc dev 0", 0);
