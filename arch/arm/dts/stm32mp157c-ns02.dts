@@ -503,6 +503,7 @@
 };
 
 &iwdg2{
+	u-boot,dm-pre-reloc;
 	status = "okay";
 
 	/* USER CODE BEGIN iwdg2 */

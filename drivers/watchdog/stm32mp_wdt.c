@@ -76,6 +76,12 @@ static int stm32mp_wdt_probe(struct udevice *dev)
 	/* Prescaler fixed to 256 */
 	reload = CONFIG_STM32MP_WATCHDOG_TIMEOUT_SECS *
 		 clk_get_rate(&clk) / 256;
+
+#ifdef CONFIG_SPL_BUILD
+	/* The SPL preloader is protected by a dedicated, fixed 5s WDT timeout, which is more than enough*/
+	reload = 5 * clk_get_rate(&clk) / 256;
+#endif		 
+		 
 	if (reload > RLR_MAX + 1)
 		/* Force to max watchdog counter reload value */
 		reload = RLR_MAX + 1;

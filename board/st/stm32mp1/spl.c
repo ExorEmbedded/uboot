@@ -28,6 +28,9 @@ void spl_board_init(void)
 				STPMIC1_MRST_BUCK(STPMIC1_BUCK3),
 				STPMIC1_MRST_BUCK(STPMIC1_BUCK3));
 
+#ifdef CONFIG_NSXX_TARGET	
+	hw_watchdog_init();
+#endif	
 	/* Check if debug is enabled to program PMIC according to the bit */
 	if ((readl(TAMP_BOOT_CONTEXT) & TAMP_BOOT_DEBUG_ON) && !ret) {
 		printf("Keep debug unit ON\n");
