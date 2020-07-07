@@ -185,7 +185,7 @@ static int passwd_abort(uint64_t etime)
 static int __abortboot(int bootdelay)
 {
 	int abort;
-	uint64_t etime = endtick(bootdelay);
+	uint64_t etime = (get_ticks() + ((uint64_t)(bootdelay) * get_tbclk()) / 10);
 
 #  ifdef CONFIG_AUTOBOOT_PROMPT
 	/*
