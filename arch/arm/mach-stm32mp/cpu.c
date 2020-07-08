@@ -202,6 +202,26 @@ int arch_cpu_init(void)
 {
 	u32 boot_mode;
 
+	/*
+	 * initialialize the MMU and activate data cache
+	 * in SPL or in U- Boot pre-reloc stage
+	 */
+	gd->arch.tlb_size = PGTABLE_SIZE;
+#if defined(CONFIG_SPL_BUILD)
+#if (STM32_SYSRAM_BASE + STM32_SYSRAM_SIZE - CONFIG_SPL_STACK < PGTABLE_SIZE)
+#error "The reserved memory for SPL PGTABLE is not enough."
+#endif
+	gd->arch.tlb_addr = CONFIG_SPL_STACK;
+#else
+	/* TLB is located after U-Boot, assumed 2MB as max size */
+	gd->arch.tlb_addr = CONFIG_SYS_TEXT_BASE + SZ_2M;
+#endif
+	dcache_enable();
+	/*
+	 * MMU/TLB is updated in enable_caches() for U-Boot after relocation
+	 * or is deactivated in U-Boot start.S::cpu_init_cp15 for SPL
+	 */
+
 	/* early armv7 timer init: needed for polling */
 	timer_init();
 
@@ -229,7 +249,13 @@ int arch_cpu_init(void)
 
 void enable_caches(void)
 {
-	/* Enable D-cache. I-cache is already enabled in start.S */
+	/* I-cache is already enabled in start.S */
+	/* deactivate the data cache, early enabled in arch_cpu_init() */
+	dcache_disable();
+	/*
+	 * update MMU after relocation, the TLB location was udpated in
+	 * board_f.c::reserve_mmu, and enable the data cache
+	 */
 	dcache_enable();
 }
 
