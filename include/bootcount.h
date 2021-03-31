@@ -63,7 +63,9 @@ static inline int bootcount_error(void)
 static inline void bootcount_inc(void)
 {
 	unsigned long bootcount = bootcount_load();
-
+#if (defined(CONFIG_CMD_I2CHWCFG))  
+	unsigned long hwcode;
+#endif
 	if (gd->flags & GD_FLG_SPL_INIT) {
 		bootcount_store(++bootcount);
 		return;
@@ -72,6 +74,14 @@ static inline void bootcount_inc(void)
 #ifndef CONFIG_SPL_BUILD
 	/* Only increment bootcount when no bootcount support in SPL */
 #ifndef CONFIG_SPL_BOOTCOUNT_LIMIT
+#if (defined(CONFIG_CMD_I2CHWCFG))  
+    hwcode = env_get_ulong("hw_code", 10, 0);
+	if(hwcode == 144)
+	{   //Do not increment the bootcount value for WE20 platforms
+		bootcount_store(bootcount);
+	}
+	else
+#endif
 	bootcount_store(++bootcount);
 #endif
 	env_set_ulong("bootcount", bootcount);
