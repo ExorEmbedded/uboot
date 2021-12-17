@@ -278,6 +278,10 @@ int board_late_init(void)
 			
 		run_command("mw.l 0x303d0518 0xff", 0);
     }
+#if defined(CONFIG_TARGET_IMX8MM_US04)
+	else //On US04 targets, other than eTOP7xx, restore cpu default pinmux settings for the RGMII_RXD3 pin
+		run_command("mw.l 0x30330304 0x116", 0);
+#endif	
 
     if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL))
     {

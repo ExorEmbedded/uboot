@@ -259,6 +259,11 @@ void board_init_f(ulong dummy)
 	/* Adjust pmic voltage to 1.0V for 800M */
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 
+#if defined(CONFIG_TARGET_IMX8MM_US04)
+	// Temporary disable any pull option on RGMII_RXD3 pin to allow proper sampling of strap options for RTL eth phy on eTOP7xx panels
+	__raw_writel(0x16,(0x30330304));
+#endif	
+	
 	power_init_board();
 
 	/* DDR initialization */
