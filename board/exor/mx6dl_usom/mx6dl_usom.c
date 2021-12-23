@@ -302,10 +302,10 @@ static int etop7xx_qspi_flash_reset(void)
   if(tmp)
     hwcode = (simple_strtoul (tmp, NULL, 10))&0xff;
   
-  if(hwcode!=ETOP7XXQ_VAL)
+  if((hwcode!=ETOP7XXQ_VAL) && (hwcode!=ETOP7XX_VAL))
     return 0;
 
-  /* We are an etop7xxq board: do qspi flash reset */
+  /* We are an etop7xx board: do qspi flash reset */
   imx_iomux_v3_setup_multiple_pads(spi_pads, ARRAY_SIZE(spi_pads));
   gpio_direction_output(SPI1_CLK, 0);
   gpio_direction_output(SPI1_SIMO, 0);
