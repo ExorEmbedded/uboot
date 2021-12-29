@@ -39,6 +39,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define US04EX705M_VAL    152
 #define US04EXW705M_VAL   153
 #define NS04ECO2XX_VAL    154
+#define US04X07_VAL       155
 
 #if defined(CONFIG_TARGET_IMX8MM_US04)
 /* Specific code for the US04 target */
@@ -310,6 +311,10 @@ int board_late_init(void)
     else if(hwcode==NS04ECO2XX_VAL)
     {
         env_set("board_name", "ns04_eco2xx"); 
+    }
+    else if(hwcode==US04X07_VAL)
+    {
+        env_set("board_name", "us04_x07"); 
     }
     else
     {
