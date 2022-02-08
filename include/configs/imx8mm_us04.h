@@ -135,7 +135,7 @@
 		"env import -t $loadaddr $filesize\0" \
 	"loadimage=load mmc ${bootpart} ${loadaddr} ${bootdir}/${bootfile}\0" \
 	"loadfdt=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}\0" \
-	"mmcloados=run mmcargs; " \
+	"mmcloados=run mmcargs; run findisolcpus; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
 				"booti ${loadaddr} - ${fdtaddr}; " \
@@ -197,6 +197,9 @@
 			"fi;" \
 			"usb stop;" \
 		"fi;\0" \
+	"findisolcpus="\
+		"if test \"${isolcpus}\" != \"\"; then " \
+			"setenv bootargs ${bootargs} isolcpus=${isolcpus}; fi; \0" \
 	"findfdt="\
 		"if test $board_name = us04_jsmart; then " \
 			"setenv fdtfile us04_jsmart.dtb; fi; " \
