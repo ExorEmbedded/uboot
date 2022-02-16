@@ -759,14 +759,15 @@ int board_late_init(void)
   if (ret)
     return -1;
 #endif
-		
+
+#if 0
   /* Get the system configuration from the I2C SEEPROM */
   if(read_eeprom())
   {
     printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
     USBgethwcfg();
   }
-  
+#endif
   /* Set the "board_name" env. variable according with the "hw_code" */
   tmp = getenv("hw_code");
   if(!tmp)
