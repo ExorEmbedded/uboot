@@ -116,7 +116,7 @@ void am33xx_spl_board_init(void)
   printf("Probing TPS65910...\n");
 
   if (i2c_probe(TPS65910_CTRL_I2C_ADDR))
-    return;
+    goto spl_setpll;
   printf("Probing TPS65910...:OK\n");
 	
   /*
@@ -139,7 +139,7 @@ void am33xx_spl_board_init(void)
   if (tps65910_voltage_update(CORE, TPS65910_OP_REG_SEL_1_1_3))
     return;
   printf("CORE voltage...SET OK\n");
-
+spl_setpll:
   /* Set CORE Frequencies to OPP100 */
   do_setup_dpll(&dpll_core_regs, &dpll_core_opp100);
 
