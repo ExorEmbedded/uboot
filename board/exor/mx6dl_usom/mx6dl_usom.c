@@ -837,6 +837,17 @@ int board_late_init(void)
     DVIpluginDetect();
   }
   
+  /* For some newer BE15Ax boards we need to pass the eth1 address via cmdline and set rst_out line to high */
+  if((hwcode==BE15A_VAL) || (hwcode==BE15B_VAL))
+  {
+    if(getenv("eth1addr"))
+	  run_command("setenv optargs pcie_tse1addr=${eth1addr}", 0);
+    
+    imx_iomux_v3_setup_multiple_pads(rst_out_pads, ARRAY_SIZE(rst_out_pads));
+    gpio_request(RST_OUT_GPIO,"");
+    gpio_direction_output(RST_OUT_GPIO, 1);
+  }
+    
   /* For the TA19 target, the number of cores is forced to 2 */
   if(hwcode==TA19_VAL)
     run_command("setenv optargs maxcpus=2", 0);
