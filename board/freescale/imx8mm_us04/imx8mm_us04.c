@@ -293,6 +293,12 @@ int board_late_init(void)
 			
 		run_command("mw.l 0x303d0518 0xff", 0);
     }
+    
+    if(hwcode==NS04X07BS_VAL)
+    {
+        if(env_get("eth2addr"))
+			run_command("setenv optargs $optargs pcie_tse2addr=${eth2addr}", 0);
+    }    
 
     if(hwcode==US04JSMART_VAL)
     {
