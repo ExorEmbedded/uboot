@@ -41,6 +41,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define NS04ECO2XX_VAL    154
 #define US04X07_VAL       155
 #define NS04DAH21_VAL     156
+#define NS04X07BS_VAL     157
 
 #if defined(CONFIG_TARGET_IMX8MM_US04)
 /* Specific code for the US04 target */
@@ -285,7 +286,7 @@ int board_late_init(void)
 		run_command("mw.l 0x30330304 0x116", 0);
 #endif	
 
-    if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL))
+    if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL)  || (hwcode==NS04X07BS_VAL) )
     {
         if(env_get("eth1addr"))
 			run_command("setenv optargs pcie_tse1addr=${eth1addr}", 0);
@@ -320,6 +321,10 @@ int board_late_init(void)
     else if(hwcode==NS04DAH21_VAL)
     {
         env_set("board_name", "ns04_dah21"); 
+    }
+    else if(hwcode==NS04X07BS_VAL)
+    {
+        env_set("board_name", "ns04_x07bs"); 
     }
     else
     {
