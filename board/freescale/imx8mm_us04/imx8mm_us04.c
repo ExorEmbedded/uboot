@@ -285,6 +285,11 @@ int board_late_init(void)
 	else //On US04 targets, other than eTOP7xx, restore cpu default pinmux settings for the RGMII_RXD3 pin
 		run_command("mw.l 0x30330304 0x116", 0);
 #endif	
+	
+	if(hwcode==0)
+	{	/* If hw_code not defined (ie: MA22 target) unbind the UART4 core from the M4 CPU domain */
+		run_command("mw.l 0x303d0518 0xff", 0);
+	};
 
     if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL)  || (hwcode==NS04X07BS_VAL) )
     {
