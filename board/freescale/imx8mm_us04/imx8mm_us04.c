@@ -291,7 +291,7 @@ int board_late_init(void)
 		run_command("mw.l 0x303d0518 0xff", 0);
 	};
 
-    if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL)  || (hwcode==NS04X07BS_VAL) )
+    if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL)  || (hwcode==NS04X07BS_VAL) || (hwcode==NS04ECO2XX_VAL) )
     {
         if(env_get("eth1addr"))
 			run_command("setenv optargs pcie_tse1addr=${eth1addr}", 0);
