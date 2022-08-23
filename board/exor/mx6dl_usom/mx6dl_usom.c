@@ -755,6 +755,7 @@ int board_late_init(void)
   unsigned long hwcode = 0;
   unsigned long rs232phyena = 0;
   unsigned long jumperflagsl = 0;
+  unsigned char value = 0;
   
   setenv("silent", "1"); 
   gd->flags |= GD_FLG_SILENT;
@@ -784,7 +785,7 @@ int board_late_init(void)
   /* If i2c bus not responding, try to put the tsc2004 controller in reset */
   setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
   i2c_set_bus_num(2);
-  if (i2c_probe(0x8)) 
+  if (i2c_read(0x8, 0, 1, &value, 1))
   {
     mdelay(2000);
     tsc2004_reset();
