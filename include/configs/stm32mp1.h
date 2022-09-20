@@ -328,6 +328,8 @@
 			"setenv fdtfile ns02_ek435.dtb; fi; " \
 		"if test $board_name = ns02_wu20; then " \
 			"setenv fdtfile ns02_wu20.dtb; fi; " \
+		"if test $board_name = ns02_wu07; then " \
+			"setenv fdtfile ns02_wu07.dtb; fi; " \
 		"if test $board_name = usom_undefined; then " \
 			"setenv fdtfile usom_undefined.dtb; fi; \0" 
 

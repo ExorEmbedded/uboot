@@ -75,6 +75,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #ifdef CONFIG_NSXX_TARGET
 #define NS02EK435_VAL    143
 #define NS02WU20_VAL     144
+#define NS02WU07_VAL     159
 
 #define DEF_STPMIC1_ADDR 0x33
 #define STPMIC1_BUCK1_MAIN_CR 0x20
@@ -401,6 +402,10 @@ int board_late_init(void)
   else if(hwcode==NS02WU20_VAL)
   {
     env_set("board_name", "ns02_wu20"); 
+  }
+  else if(hwcode==NS02WU07_VAL)
+  {
+    env_set("board_name", "ns02_wu07"); 
   }
   else
   {

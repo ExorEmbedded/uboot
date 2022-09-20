@@ -76,7 +76,7 @@ static inline void bootcount_inc(void)
 #ifndef CONFIG_SPL_BOOTCOUNT_LIMIT
 #if (defined(CONFIG_CMD_I2CHWCFG))  
     hwcode = env_get_ulong("hw_code", 10, 0);
-	if(hwcode == 144)
+	if((hwcode == 144) || (hwcode == 159))
 	{   //Do not increment the bootcount value for WE20 platforms
 		bootcount_store(bootcount);
 	}
