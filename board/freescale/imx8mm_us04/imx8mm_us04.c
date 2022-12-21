@@ -93,10 +93,12 @@ static iomux_v3_cfg_t const wdog_pads[] = {
 
 #define US04_RST_OUT_GPIO IMX_GPIO_NR(4, 25)
 #define US04_SDCD_GPIO    IMX_GPIO_NR(2, 12)
+#define DAH21_ENI2C2_GPIO IMX_GPIO_NR(1, 3)
 #define US04_RST_GPIO_PAD_CTRL (PAD_CTL_PUE | PAD_CTL_DSE1)
 
 static iomux_v3_cfg_t const us04_rst_pads[] = {
     IMX8MM_PAD_SAI2_TXC_GPIO4_IO25 | MUX_PAD_CTRL(US04_RST_GPIO_PAD_CTRL),
+    IMX8MM_PAD_GPIO1_IO03_GPIO1_IO3 | MUX_PAD_CTRL(US04_RST_GPIO_PAD_CTRL),
 };
 
 void ena_rs232phy(void){}
@@ -305,6 +307,28 @@ int board_late_init(void)
         if(env_get("eth2addr"))
 			run_command("setenv optargs $optargs pcie_tse2addr=${eth2addr}", 0);
     }    
+    
+#if defined(CONFIG_TARGET_IMX8MM_NS04)    
+    if(hwcode==NS04DAH21_VAL)
+    {
+		/* If DAH21 target, connect the i2c2 aux bus to the system i2c bus and
+		 * configure the connected TLC59116 LED drivers to ignore the promiscuous (0x68)
+		 * device address, to avoid conflicts with the RTC chip. */
+		gpio_request(DAH21_ENI2C2_GPIO , "dah21_eni2c2_gpio");
+		gpio_direction_output(DAH21_ENI2C2_GPIO, 1);
+		udelay(1000);
+		run_command("i2c mw 0x60 0x00 0x10", 0);
+		run_command("i2c mw 0x60 0x1b 0xca", 0);
+		run_command("i2c mw 0x61 0x00 0x10", 0);
+		run_command("i2c mw 0x61 0x1b 0xca", 0);
+		run_command("i2c mw 0x62 0x00 0x10", 0);
+		run_command("i2c mw 0x62 0x1b 0xca", 0);
+		run_command("i2c mw 0x63 0x00 0x10", 0);
+		run_command("i2c mw 0x63 0x1b 0xca", 0);
+		run_command("i2c mw 0x64 0x00 0x10", 0);
+		run_command("i2c mw 0x64 0x1b 0xca", 0);
+	};
+#endif
 
     if(hwcode==US04JSMART_VAL)
     {
