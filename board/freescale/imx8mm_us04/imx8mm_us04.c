@@ -79,9 +79,9 @@ void ena_rs232phy(void)
 #else
 void ena_rs232phy(void){}
 #endif
-#elif defined(CONFIG_TARGET_IMX8MM_NS04)
+#elif defined(CONFIG_TARGET_IMX8MM_NS04) || defined(CONFIG_TARGET_IMX8MM_NS06)
 /* Specific code for the NS04 target */
-#warning "Building for target: NS04"
+#warning "Building for target: NS04/NS06"
 static iomux_v3_cfg_t const uart_pads[] = {
 	IMX8MM_PAD_UART3_RXD_UART3_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	IMX8MM_PAD_UART3_TXD_UART3_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
@@ -308,7 +308,7 @@ int board_late_init(void)
 			run_command("setenv optargs $optargs pcie_tse2addr=${eth2addr}", 0);
     }    
     
-#if defined(CONFIG_TARGET_IMX8MM_NS04)    
+#if defined(CONFIG_TARGET_IMX8MM_NS04) || defined(CONFIG_TARGET_IMX8MM_NS06) 
     if(hwcode==NS04DAH21_VAL)
     {
 		/* If DAH21 target, connect the i2c2 aux bus to the system i2c bus and

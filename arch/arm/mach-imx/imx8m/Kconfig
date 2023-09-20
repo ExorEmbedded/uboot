@@ -69,6 +69,12 @@ config TARGET_IMX8MM_NS04
 	select IMX8MM
 	select SUPPORT_SPL
 
+config TARGET_IMX8MM_NS06
+	bool "imx8mm 2GB LPDDR4 NS06 board"
+	select IMX8MM
+	select SUPPORT_SPL
+	select IMX8M_LPDDR4
+	
 config TARGET_IMX8MN_NS05
 	bool "imx8mn 1GB DDR3L NS05 board"
 	select IMX8MN

@@ -246,6 +246,23 @@
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 
 
+#ifdef CONFIG_TARGET_IMX8MM_NS06
+#define CFG_SYS_ALT_BOOTCOMMAND \
+	"i2c mw 6f 20 0; " \
+	"setenv mmcdev 0; " \
+	"setenv mmcroot /dev/mmcblk0p2 ro; " \
+	"run findfdt; " \
+	"echo Try booting Linux from SD-card...;" \
+	"run mmcboot;" \
+	"echo Try booting Linux from USB stick...;" \
+	"run usbboot;" \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;" 		
+#else	
 #define CFG_SYS_ALT_BOOTCOMMAND \
 	"i2c mw 68 19 0; " \
 	"setenv mmcdev 0; " \
@@ -261,7 +278,8 @@
 	"setenv bootpart 1:2; " \
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 		
-       
+#endif
+	
 /* Link Definitions */
 #define CONFIG_LOADADDR                0x40480000
 
@@ -309,6 +327,12 @@
 
 /* Use UART3 for NS04 */
 #ifdef CONFIG_TARGET_IMX8MM_NS04
+#undef CONFIG_MXC_UART_BASE
+#define CONFIG_MXC_UART_BASE           UART3_BASE_ADDR
+#endif
+
+/* Use UART3 for NS06 */
+#ifdef CONFIG_TARGET_IMX8MM_NS06
 #undef CONFIG_MXC_UART_BASE
 #define CONFIG_MXC_UART_BASE           UART3_BASE_ADDR
 #endif
@@ -381,6 +405,15 @@
 
 #define CONFIG_OF_SYSTEM_SETUP
 
+#ifdef CONFIG_TARGET_IMX8MM_NS06
+/* Bootcounter using the MCP7940NT I2C RTC NVRAM */
+#define CONFIG_BOOTCOUNT_LIMIT
+#define CONFIG_BOOTCOUNT_I2C
+#define CONFIG_BOOTCOUNT_ALEN           1
+#define CONFIG_SYS_I2C_RTC_ADDR         0x6f
+#undef  CONFIG_SYS_BOOTCOUNT_ADDR
+#define CONFIG_SYS_BOOTCOUNT_ADDR       0x20
+#else
 /* Bootcounter using the M41T83 I2C RTC NVRAM */
 #define CONFIG_BOOTCOUNT_LIMIT
 #define CONFIG_BOOTCOUNT_I2C
@@ -388,5 +421,5 @@
 #define CONFIG_SYS_I2C_RTC_ADDR         0x68
 #undef  CONFIG_SYS_BOOTCOUNT_ADDR
 #define CONFIG_SYS_BOOTCOUNT_ADDR       0x19
-
+#endif
 #endif
