@@ -330,47 +330,60 @@ int board_late_init(void)
 	};
 #endif
 
+	/* NOTE: New target references need to be added here only and not into the findfdt  
+	 *       script, to keep the default environment unchanged.
+	 */
     if(hwcode==US04JSMART_VAL)
     {
         env_set("board_name", "us04_jsmart");
+		env_set("fdtfile", "us04_jsmart.dtb");
     }
     else if(hwcode==US04ETOPXX_VAL)
     {
         env_set("board_name", "us04_etopxx"); 
+		env_set("fdtfile", "us04_etopxx.dtb");
     }
     else if(hwcode==US04WU10_VAL)
     {
         env_set("board_name", "us04_wu10"); 
+		env_set("fdtfile", "us04_wu10.dtb");
     }
     else if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL))
 	{
 		env_set("board_name", "us04_ex705m");
+		env_set("fdtfile", "us04_ex705m.dtb");
 	}
     else if(hwcode==NS04ECO2XX_VAL)
     {
         env_set("board_name", "ns04_eco2xx"); 
+		env_set("fdtfile", "ns04_eco2xx.dtb");
     }
     else if(hwcode==US04X07_VAL)
     {
         env_set("board_name", "us04_x07"); 
+		env_set("fdtfile", "us04_x07.dtb");
     }
     else if(hwcode==NS04DAH21_VAL)
     {
         env_set("board_name", "ns04_dah21"); 
+		env_set("fdtfile", "ns04_dah21.dtb");
     }
     else if(hwcode==NS04X07BS_VAL)
     {
         env_set("board_name", "ns04_x07bs"); 
+		env_set("fdtfile", "ns04_x07bs.dtb");
     }
     else if(hwcode==NS04DA22_VAL)
     {
         env_set("board_name", "ns04_da22"); 
+		env_set("fdtfile", "ns04_da22.dtb");
     }
     else
     {
         ena_rs232phy();
         puts ("WARNING: unknowm carrier hw code; using 'usom_undefined' board name. \n");
         env_set("board_name", "usom_undefined");
+		env_set("fdtfile", "usom_undefined.dtb");
     }
     /* Check if file $0030d8$.bin exists on the 1st partition of the SD-card and, if so, skips booting the mainOS */
     run_command("setenv skipbsp1 0", 0);

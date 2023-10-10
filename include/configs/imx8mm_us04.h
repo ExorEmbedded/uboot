@@ -209,16 +209,8 @@
 			"setenv fdtfile us04_wu10.dtb; fi; " \
 		"if test $board_name = us04_ex705m; then " \
 			"setenv fdtfile us04_ex705m.dtb; fi; " \
-		"if test $board_name = ns04_eco2xx; then " \
-			"setenv fdtfile ns04_eco2xx.dtb; fi; " \
 		"if test $board_name = us04_x07; then " \
 			"setenv fdtfile us04_x07.dtb; fi; " \
-		"if test $board_name = ns04_dah21; then " \
-			"setenv fdtfile ns04_dah21.dtb; fi; " \
-		"if test $board_name = ns04_x07bs; then " \
-			"setenv fdtfile ns04_x07bs.dtb; fi; " \
-		"if test $board_name = ns04_da22; then " \
-			"setenv fdtfile ns04_da22.dtb; fi; " \
 		"if test $board_name = usom_undefined; then " \
 			"setenv fdtfile usom_undefined.dtb; fi; \0" 
 			
@@ -294,7 +286,7 @@
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_ENV_OFFSET              (0)
-#define CONFIG_ENV_SIZE                0x2000
+#define CONFIG_ENV_SIZE                0x1000
 #define CONFIG_SYS_MMC_ENV_DEV         1 /* Environment in EMMC, BOOT2 partition */
 #define CONFIG_SYS_MMC_ENV_PART        2 
 #define CONFIG_MMCROOT                 "/dev/mmcblk1p2"
