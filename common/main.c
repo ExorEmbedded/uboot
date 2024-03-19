@@ -345,12 +345,25 @@ static void process_boot_delay(void)
 
 #ifdef CONFIG_BOOTCOUNT_LIMIT
 	bootcount = bootcount_load();
-#ifndef CONFIG_SYS_BOOTCOUNT_NO_INCREMENT	
 	bootcount++;
-#endif	
 	bootcount_store (bootcount);
 	setenv_ulong("bootcount", bootcount);
 	bootlimit = getenv_ulong("bootlimit", 10, 0);
+#ifdef CONFIG_SYS_BOOTCOUNT_WU16
+	/* BSP-5653: WUxx recovery */
+	if(1)
+	{
+	  unsigned long fastboot_bootlimit = 20;
+	  fastboot_bootlimit = getenv_ulong("fastboot_bootlimit", 10, 20);
+	  if(fastboot_bootlimit > 20)
+	    fastboot_bootlimit = 20;
+	  if(fastboot_bootlimit < 5)
+	    fastboot_bootlimit = 5;
+	  bootlimit = fastboot_bootlimit + 5;
+	  if(bootcount >= fastboot_bootlimit)
+	    setenv ("fastboot", "n");
+	}
+#endif
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 
 	s = getenv ("bootdelay");
