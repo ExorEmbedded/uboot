@@ -47,6 +47,21 @@ static inline int bootcount_error(void)
 {
 	unsigned long bootcount = bootcount_load();
 	unsigned long bootlimit = env_get_ulong("bootlimit", 10, 0);
+#if (defined(CONFIG_CMD_I2CHWCFG))
+	unsigned long hwcode = env_get_ulong("hw_code", 10, 0);
+	if((hwcode == 144) || (hwcode == 159))
+	{ /* BSP-5653: WUxx recovery */
+	  unsigned long fastboot_bootlimit = 20;
+	  fastboot_bootlimit = env_get_ulong("fastboot_bootlimit", 10, 20);
+	  if(fastboot_bootlimit > 20)
+	    fastboot_bootlimit = 20;
+	  if(fastboot_bootlimit < 5)
+	    fastboot_bootlimit = 5;
+	  bootlimit = fastboot_bootlimit + 5;
+	  if(bootcount >= fastboot_bootlimit)
+	    env_set("fastboot", "n");
+	}
+#endif
 
 	if (bootlimit && bootcount > bootlimit) {
 		printf("Warning: Bootlimit (%lu) exceeded.", bootlimit);
@@ -63,9 +78,6 @@ static inline int bootcount_error(void)
 static inline void bootcount_inc(void)
 {
 	unsigned long bootcount = bootcount_load();
-#if (defined(CONFIG_CMD_I2CHWCFG))  
-	unsigned long hwcode;
-#endif
 	if (gd->flags & GD_FLG_SPL_INIT) {
 		bootcount_store(++bootcount);
 		return;
@@ -74,14 +86,6 @@ static inline void bootcount_inc(void)
 #ifndef CONFIG_SPL_BUILD
 	/* Only increment bootcount when no bootcount support in SPL */
 #ifndef CONFIG_SPL_BOOTCOUNT_LIMIT
-#if (defined(CONFIG_CMD_I2CHWCFG))  
-    hwcode = env_get_ulong("hw_code", 10, 0);
-	if((hwcode == 144) || (hwcode == 159))
-	{   //Do not increment the bootcount value for WE20 platforms
-		bootcount_store(bootcount);
-	}
-	else
-#endif
 	bootcount_store(++bootcount);
 #endif
 	env_set_ulong("bootcount", bootcount);
