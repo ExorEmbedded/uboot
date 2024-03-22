@@ -313,14 +313,26 @@ const char *bootdelay_process(void)
 
 #ifdef CONFIG_BOOTCOUNT_LIMIT
 	bootcount = bootcount_load();
-#if (defined(CONFIG_CMD_I2CHWCFG))  
-    hwcode = env_get_ulong("hw_code", 10, 0);
-	if(hwcode != 147)
-#endif	
 	bootcount++;
 	bootcount_store(bootcount);
 	env_set_ulong("bootcount", bootcount);
 	bootlimit = env_get_ulong("bootlimit", 10, 0);
+
+#if (defined(CONFIG_CMD_I2CHWCFG))
+	hwcode = env_get_ulong("hw_code", 10, 0);
+	if(hwcode == 147)
+	{ /* BSP-5653: WUxx recovery */
+	  unsigned long fastboot_bootlimit = 20;
+	  fastboot_bootlimit = env_get_ulong("fastboot_bootlimit", 10, 20);
+	  if(fastboot_bootlimit > 20)
+	    fastboot_bootlimit = 20;
+	  if(fastboot_bootlimit < 5)
+	    fastboot_bootlimit = 5;
+	  bootlimit = fastboot_bootlimit + 5;
+	  if(bootcount >= fastboot_bootlimit)
+	    env_set("fastboot", "n");
+	}
+#endif
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 
 	s = env_get("bootdelay");
