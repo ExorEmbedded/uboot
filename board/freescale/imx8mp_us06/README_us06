@@ -1,0 +1,86 @@
+imx8mp_us06
+===========
+
+U-Boot for the i.MX8MP US06 board
+
+Quick Start
+-----------
+
+- Build the ARM Trusted firmware binary
+- Get ddr firmware
+- Build U-Boot
+- Get the imx-mkimage tool and build the flash.bin image
+- Boot
+
+Get and Build the ARM Trusted firmware
+--------------------------------------
+
+Note: builddir is U-Boot build directory (source directory for in-tree builds)
+Note: Need to change the UART base configuration to match the uart1 base address
+
+1) Get ATF from: https://github.com/nxp-imx/imx-atf
+branch: lf_v2.8
+
+2) Build (the proper UART base address has to specified as below)
+
+$ make PLAT=imx8mp IMX_BOOT_UART_BASE=0x30860000 bl31
+$ cp build/imx8mp/release/bl31.bin $(builddir)
+
+Get the ddr firmware
+--------------------
+
+$ wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/firmware-imx-8.10.bin
+$ chmod +x firmware-imx-8.10.bin
+$ ./firmware-imx-8.10.bin
+$ cp firmware-imx-8.10/firmware/ddr/synopsys/lpddr4_pmu_train_1d_dmem_202006.bin $(builddir)
+$ cp firmware-imx-8.10/firmware/ddr/synopsys/lpddr4_pmu_train_2d_dmem_202006.bin $(builddir)
+$ cp firmware-imx-8.10/firmware/ddr/synopsys/lpddr4_pmu_train_1d_imem_202006.bin $(builddir)
+$ cp firmware-imx-8.10/firmware/ddr/synopsys/lpddr4_pmu_train_2d_imem_202006.bin $(builddir)
+
+Build U-Boot
+------------
+
+$ export CROSS_COMPILE=aarch64-poky-linux-
+$ make imx8mp_us06_defconfig
+$ make
+
+Get the imx-mkimage tool and build the flash.bin image
+------------------------------------------------------
+The final flash.bin image has to be assembled using the external imx-mkimage tool.
+
+1) Get imx-mkimage tool from: https://github.com/nxp-imx/imx-mkimage
+branch: lf-6.6.3_1.0.0
+
+2) Generate the flash.bin image by launching the us06_mkimage.sh script (source below) which needs to be copied in the imx-mkimage root folder.
+The generated flash.bin file is in the iMX8M subfolder of the imx-mkimage root folder.
+
+################################################
+#!/bin/sh
+cd "$(dirname "$0")"
+
+rm ./iMX8M/u-boot-spl.bin
+rm ./iMX8M/u-boot-nodtb.bin
+rm ./iMX8M/*.dtb
+rm ./iMX8M/flash.bin
+
+cp ../uboot_us06/tools/mkimage ./iMX8M/mkimage_uboot
+
+cp ../uboot_us06/spl/u-boot-spl.bin ./iMX8M
+cp ../uboot_us06/u-boot-nodtb.bin ./iMX8M
+cp ../uboot_us06/arch/arm/dts/imx8mp-us06.dtb ./iMX8M/imx8mp-evk.dtb
+
+cp ../uboot_us06/lpddr4_pmu_train_* ./iMX8M
+cp ../uboot_us06/bl31.bin ./iMX8M
+
+make SOC=iMX8MP flash_evk
+
+rm ./iMX8M/u-boot-spl.bin
+rm ./iMX8M/u-boot-nodtb.bin
+rm ./iMX8M/*.dtb
+###############################################
+
+
+Burn the flash.bin to MicroSD card offset 32KB:
+------------------------------------------------
+
+$sudo dd if=flash.bin of=/dev/sd[x] bs=1024 seek=32 conv=notrunc
