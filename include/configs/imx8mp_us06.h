@@ -164,26 +164,12 @@
 /* Totally 6GB DDR */
 #define CFG_SYS_SDRAM_BASE		0x40000000
 #define PHYS_SDRAM			0x40000000
-#define PHYS_SDRAM_SIZE			0xC0000000	/* 3 GB */
-#define PHYS_SDRAM_2			0x100000000
-#ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
-#define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
-#else
-#define PHYS_SDRAM_2_SIZE		0xC0000000	/* 3 GB */
-#endif
+#define PHYS_SDRAM_SIZE			SZ_4G
 
 #define CFG_MXC_UART_BASE		UART2_BASE_ADDR
 
 #define CFG_SYS_NAND_BASE           0x20000000
 
-#ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
-#define CFG_SYS_FSL_USDHC_NUM	1
-#else
 #define CFG_SYS_FSL_USDHC_NUM	2
-#endif
-
-#ifdef CONFIG_ANDROID_SUPPORT
-#include "imx8mp_evk_android.h"
-#endif
 
 #endif
