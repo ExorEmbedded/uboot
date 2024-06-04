@@ -76,7 +76,7 @@
 	u-boot,off-on-delay-us = <20000>;
 };
 
-&pinctrl_uart2 {
+&pinctrl_uart1 {
 	u-boot,dm-spl;
 };
 
@@ -116,7 +116,7 @@
 	u-boot,dm-spl;
 };
 
-&uart2 {
+&uart1 {
 	u-boot,dm-spl;
 };
 
@@ -195,24 +195,6 @@
 
 &pinctrl_pmic {
 	u-boot,dm-spl;
-};
-
-&eqos {
-	/delete-property/ assigned-clocks;
-	/delete-property/ assigned-clock-parents;
-	/delete-property/ assigned-clock-rates;
-};
-
-&ethphy0 {
-	reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
-	reset-assert-us = <15000>;
-	reset-deassert-us = <100000>;
-};
-
-&fec {
-	phy-reset-gpios = <&gpio4 2 GPIO_ACTIVE_LOW>;
-	phy-reset-duration = <15>;
-	phy-reset-post-delay = <100>;
 };
 
 &flexspi {

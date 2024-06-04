@@ -14,8 +14,7 @@
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
 
 	chosen {
-		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
-		stdout-path = &uart2;
+		stdout-path = &uart1;
 	};
 
 	gpio-leds {
@@ -39,28 +38,6 @@
 		compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <100000000>;
-	};
-
-	reg_can1_stby: regulator-can1-stby {
-		compatible = "regulator-fixed";
-		regulator-name = "can1-stby";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-	};
-
-	reg_can2_stby: regulator-can2-stby {
-		compatible = "regulator-fixed";
-		regulator-name = "can2-stby";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_flexcan2_reg>;
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
 	};
 
 	reg_pcie0: regulator-pcie {
@@ -157,138 +134,6 @@
 
 &A53_3 {
 	cpu-supply = <&buck2>;
-};
-
-&eqos {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_eqos>;
-	phy-mode = "rgmii-id";
-	phy-handle = <&ethphy0>;
-	snps,force_thresh_dma_mode;
-	snps,mtl-tx-config = <&mtl_tx_setup>;
-	snps,mtl-rx-config = <&mtl_rx_setup>;
-	status = "okay";
-
-	mdio {
-		compatible = "snps,dwmac-mdio";
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		ethphy0: ethernet-phy@1 {
-			compatible = "ethernet-phy-ieee802.3-c22";
-			reg = <1>;
-			eee-broken-1000t;
-			reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
-			reset-assert-us = <10000>;
-			reset-deassert-us = <80000>;
-			realtek,clkout-disable;
-		};
-	};
-
-	mtl_tx_setup: tx-queues-config {
-		snps,tx-queues-to-use = <5>;
-		snps,tx-sched-sp;
-
-		queue0 {
-			snps,dcb-algorithm;
-			snps,priority = <0x1>;
-		};
-
-		queue1 {
-			snps,dcb-algorithm;
-			snps,priority = <0x2>;
-		};
-
-		queue2 {
-			snps,dcb-algorithm;
-			snps,priority = <0x4>;
-		};
-
-		queue3 {
-			snps,dcb-algorithm;
-			snps,priority = <0x8>;
-		};
-
-		queue4 {
-			snps,dcb-algorithm;
-			snps,priority = <0xf0>;
-		};
-	};
-
-	mtl_rx_setup: rx-queues-config {
-		snps,rx-queues-to-use = <5>;
-		snps,rx-sched-sp;
-
-		queue0 {
-			snps,dcb-algorithm;
-			snps,priority = <0x1>;
-			snps,map-to-dma-channel = <0>;
-		};
-
-		queue1 {
-			snps,dcb-algorithm;
-			snps,priority = <0x2>;
-			snps,map-to-dma-channel = <1>;
-		};
-
-		queue2 {
-			snps,dcb-algorithm;
-			snps,priority = <0x4>;
-			snps,map-to-dma-channel = <2>;
-		};
-
-		queue3 {
-			snps,dcb-algorithm;
-			snps,priority = <0x8>;
-			snps,map-to-dma-channel = <3>;
-		};
-
-		queue4 {
-			snps,dcb-algorithm;
-			snps,priority = <0xf0>;
-			snps,map-to-dma-channel = <4>;
-		};
-	};
-};
-
-&fec {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_fec>;
-	phy-mode = "rgmii-id";
-	phy-handle = <&ethphy1>;
-	fsl,magic-packet;
-	status = "okay";
-
-	mdio {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		ethphy1: ethernet-phy@1 {
-			compatible = "ethernet-phy-ieee802.3-c22";
-			reg = <1>;
-			eee-broken-1000t;
-			reset-gpios = <&gpio4 2 GPIO_ACTIVE_LOW>;
-			reset-assert-us = <10000>;
-			reset-deassert-us = <80000>;
-			realtek,aldps-enable;
-			realtek,clkout-disable;
-		};
-	};
-};
-
-&flexcan1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_flexcan1>;
-	xceiver-supply = <&reg_can1_stby>;
-	status = "okay";
-};
-
-&flexcan2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_flexcan2>;
-	xceiver-supply = <&reg_can2_stby>;
-	pinctrl-assert-gpios = <&pca6416 3 GPIO_ACTIVE_HIGH>;
-	status = "disabled";/* can2 pin conflict with pdm */
 };
 
 &i2c1 {
@@ -560,10 +405,10 @@
 	status = "okay";
 };
 
-&uart2 {
+&uart1 {
 	/* console */
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_uart2>;
+	pinctrl-0 = <&pinctrl_uart1>;
 	status = "okay";
 };
 
@@ -649,72 +494,6 @@
 };
 
 &iomuxc {
-	pinctrl_eqos: eqosgrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_ENET_MDC__ENET_QOS_MDC				0x2
-			MX8MP_IOMUXC_ENET_MDIO__ENET_QOS_MDIO				0x2
-			MX8MP_IOMUXC_ENET_RD0__ENET_QOS_RGMII_RD0			0x90
-			MX8MP_IOMUXC_ENET_RD1__ENET_QOS_RGMII_RD1			0x90
-			MX8MP_IOMUXC_ENET_RD2__ENET_QOS_RGMII_RD2			0x90
-			MX8MP_IOMUXC_ENET_RD3__ENET_QOS_RGMII_RD3			0x90
-			MX8MP_IOMUXC_ENET_RXC__CCM_ENET_QOS_CLOCK_GENERATE_RX_CLK	0x90
-			MX8MP_IOMUXC_ENET_RX_CTL__ENET_QOS_RGMII_RX_CTL			0x90
-			MX8MP_IOMUXC_ENET_TD0__ENET_QOS_RGMII_TD0			0x16
-			MX8MP_IOMUXC_ENET_TD1__ENET_QOS_RGMII_TD1			0x16
-			MX8MP_IOMUXC_ENET_TD2__ENET_QOS_RGMII_TD2			0x16
-			MX8MP_IOMUXC_ENET_TD3__ENET_QOS_RGMII_TD3			0x16
-			MX8MP_IOMUXC_ENET_TX_CTL__ENET_QOS_RGMII_TX_CTL			0x16
-			MX8MP_IOMUXC_ENET_TXC__CCM_ENET_QOS_CLOCK_GENERATE_TX_CLK	0x16
-			MX8MP_IOMUXC_SAI2_RXC__GPIO4_IO22				0x10
-		>;
-	};
-
-	pinctrl_fec: fecgrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SAI1_RXD2__ENET1_MDC		0x2
-			MX8MP_IOMUXC_SAI1_RXD3__ENET1_MDIO		0x2
-			MX8MP_IOMUXC_SAI1_RXD4__ENET1_RGMII_RD0		0x90
-			MX8MP_IOMUXC_SAI1_RXD5__ENET1_RGMII_RD1		0x90
-			MX8MP_IOMUXC_SAI1_RXD6__ENET1_RGMII_RD2		0x90
-			MX8MP_IOMUXC_SAI1_RXD7__ENET1_RGMII_RD3		0x90
-			MX8MP_IOMUXC_SAI1_TXC__ENET1_RGMII_RXC		0x90
-			MX8MP_IOMUXC_SAI1_TXFS__ENET1_RGMII_RX_CTL	0x90
-			MX8MP_IOMUXC_SAI1_TXD0__ENET1_RGMII_TD0		0x16
-			MX8MP_IOMUXC_SAI1_TXD1__ENET1_RGMII_TD1		0x16
-			MX8MP_IOMUXC_SAI1_TXD2__ENET1_RGMII_TD2		0x16
-			MX8MP_IOMUXC_SAI1_TXD3__ENET1_RGMII_TD3		0x16
-			MX8MP_IOMUXC_SAI1_TXD4__ENET1_RGMII_TX_CTL	0x16
-			MX8MP_IOMUXC_SAI1_TXD5__ENET1_RGMII_TXC		0x16
-			MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02		0x10
-		>;
-	};
-
-	pinctrl_flexcan1: flexcan1grp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SPDIF_RX__CAN1_RX          0x154
-			MX8MP_IOMUXC_SPDIF_TX__CAN1_TX          0x154
-		>;
-	};
-
-	pinctrl_flexcan2: flexcan2grp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SAI5_MCLK__CAN2_RX         0x154
-			MX8MP_IOMUXC_SAI5_RXD3__CAN2_TX         0x154
-		>;
-	};
-
-	pinctrl_flexcan1_reg: flexcan1reggrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO05  0x154   /* CAN1_STBY */
-		>;
-	};
-
-	pinctrl_flexcan2_reg: flexcan2reggrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
-		>;
-	};
-
 	pinctrl_flexspi0: flexspi0grp {
 		fsl,pins = <
 			MX8MP_IOMUXC_NAND_ALE__FLEXSPI_A_SCLK           0x1c2
@@ -831,10 +610,10 @@
 		>;
 	};
 
-	pinctrl_uart2: uart2grp {
+	pinctrl_uart1: uart1grp {
 		fsl,pins = <
-			MX8MP_IOMUXC_UART2_RXD__UART2_DCE_RX	0x140
-			MX8MP_IOMUXC_UART2_TXD__UART2_DCE_TX	0x140
+			MX8MP_IOMUXC_UART1_RXD__UART1_DCE_RX	0x140
+			MX8MP_IOMUXC_UART1_TXD__UART1_DCE_TX	0x140
 		>;
 	};
 
