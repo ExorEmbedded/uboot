@@ -140,14 +140,6 @@
 	u-boot,dm-spl;
 };
 
-&i2c2 {
-	u-boot,dm-spl;
-};
-
-&i2c3 {
-	u-boot,dm-spl;
-};
-
 &pinctrl_i2c1 {
 	u-boot,dm-spl;
 };
@@ -195,16 +187,6 @@
 
 &pinctrl_pmic {
 	u-boot,dm-spl;
-};
-
-&flexspi {
-	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
-};
-
-&mipi_dsi {
-	/delete-property/ assigned-clocks;
-	/delete-property/ assigned-clock-parents;
-	/delete-property/ assigned-clock-rates;
 };
 
 &usb_dwc3_0 {
