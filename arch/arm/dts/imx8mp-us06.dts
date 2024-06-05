@@ -17,6 +17,16 @@
 		stdout-path = &uart1;
 	};
 
+	gpio-leds {
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_led>;
+		led-0 {
+			gpios = <&gpio3 23 GPIO_ACTIVE_HIGH>; /* RST_OUT line */
+			default-state = "on";
+		};
+	};
+
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0x0 0x40000000 0 0xc0000000>,
@@ -193,8 +203,6 @@
 };
 
 &usb_dwc3_1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_usb1_vbus>;
 	dr_mode = "host";
 	status = "okay";
 };
@@ -265,9 +273,9 @@
 		>;
 	};
 
-	pinctrl_usb1_vbus: usb1grp {
+	pinctrl_gpio_led: gpioledgrp {
 		fsl,pins = <
-			MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x10
+			MX8MP_IOMUXC_SAI5_RXD2__GPIO3_IO23	0x140 /* RST_OUT */
 		>;
 	};
 
