@@ -15,21 +15,13 @@
 
 #ifdef CONFIG_DISTRO_DEFAULTS
 #define BOOT_TARGET_DEVICES(func) \
-	func(USB, usb, 0) \
-	func(MMC, mmc, 1) \
-	func(MMC, mmc, 2)
+	func(MMC, mmc, 0) \
+	func(MMC, mmc, 1)
 
 #include <config_distro_bootcmd.h>
 #else
 #define BOOTENV
 #endif
-
-#define CFG_MFG_ENV_SETTINGS \
-	CFG_MFG_ENV_SETTINGS_DEFAULT \
-	"initrd_addr=0x43800000\0" \
-	"initrd_high=0xffffffffffffffff\0" \
-	"emmc_dev=2\0"\
-	"sd_dev=1\0"
 
 #define CFG_EXTRA_ENV_SETTINGS		\
 	BOOTENV \
