@@ -85,4 +85,5 @@
 #define CFG_MXC_UART_BASE		UART1_BASE_ADDR
 #define CFG_SYS_FSL_USDHC_NUM	2
 
+#define CFG_SYS_I2C_RTC_ADDR       0x6f
 #endif
