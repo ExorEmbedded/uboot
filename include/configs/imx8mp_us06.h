@@ -86,4 +86,8 @@
 #define CFG_SYS_FSL_USDHC_NUM	2
 
 #define CFG_SYS_I2C_RTC_ADDR       0x6f
+
+#define CONFIG_SYS_I2C_EEPROM_ADDR 0x54
+#define DEF_SYS_I2C_ADPADD 0x56
+
 #endif

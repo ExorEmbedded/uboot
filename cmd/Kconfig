@@ -1191,6 +1191,11 @@ config CMD_I2C
 	help
 	  I2C support.
 
+config CMD_I2CHWCFG
+	bool "I2CHWCFG"
+	help
+	  Add custom Exor support for system parameters stored in I2C eeprom.
+
 config CMD_W1
 	depends on W1
 	default y if W1
