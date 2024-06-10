@@ -30,6 +30,43 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define US06ETOPXX_VAL   163
+
+/*
+ * Read I2C SEEPROM infos and set env. variables accordingly
+ */
+static int read_eeprom(void)
+{
+#if (defined(CONFIG_CMD_I2CHWCFG))
+  extern int i2cgethwcfg (void);
+  return i2cgethwcfg();
+#endif
+  return 0;
+}
+
+/*
+ * Reads the hwcfg.txt file from USB stick (root of FATFS partition) if any, parses it
+ * and updates the environment variable accordingly.
+ *
+ * NOTE: This function is used in case the I2C SEEPROM contents are not valid, in order to get
+ *       a temporary and volatile HW configuration from USB to boot properly Linux (even if the I2C SEEPROM is not programmed)
+ */
+static int USBgethwcfg(void)
+{
+#if (defined(CONFIG_CMD_I2CHWCFG))
+  printf("Trying to get the HW cfg from USB stick...\n");
+
+  run_command("usb stop", 0);
+  run_command("usb reset", 0);
+  run_command("setenv filesize 0", 0);
+  run_command("fatload usb 0 ${loadaddr} hwcfg.txt", 0);
+  run_command("env import -t ${loadaddr} ${filesize}", 0);
+  run_command("usb stop", 0);
+#endif
+  return 0;
+}
+
+
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
 #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
 
@@ -241,12 +278,62 @@ int board_init(void)
 
 int board_late_init(void)
 {
+#if (defined(CONFIG_CMD_I2CHWCFG))
+	char* tmp;
+	unsigned long hwcode = 0;
+#endif
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "EVK");
 	env_set("board_rev", "iMX8MP");
+#endif
+
+#if (defined(CONFIG_CMD_I2CHWCFG))
+	/* Get the system configuration from the I2C SEEPROM */
+	if(read_eeprom())
+	{
+		printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
+		USBgethwcfg();
+	}
+
+	/* Set the "board_name" env. variable according with the "hw_code" */
+	tmp = env_get("hw_code");
+	if(!tmp)
+	{
+		puts ("WARNING: 'hw_code' environment var not found!\n");
+	}
+	else
+		hwcode = (simple_strtoul (tmp, NULL, 10))&0xff;
+
+	/* For eTOP7xx panels...
+	 * 1: pass the mac addresses for the additional PCIe/USB eth ports via cmdline */
+    if((hwcode==US06ETOPXX_VAL))
+    {
+        if(env_get("eth1addr"))
+            if(env_get("eth2addr"))
+                run_command("setenv optargs pcie_tse1addr=${eth1addr} pcie_tse2addr=${eth2addr}", 0);
+    }
+
+	/* NOTE: New target references need to be added here.
+	 */
+	if(hwcode==US06ETOPXX_VAL)
+	{
+		env_set("board_name", "us06_etopxx");
+		env_set("fdtfile", "us06_etopxx.dtb");
+	}
+	else
+	{
+		puts ("WARNING: unknowm carrier hw code; using 'usom_undefined' board name. \n");
+		env_set("board_name", "usom_undefined");
+	}
+
+	/* Check if file $0030d8$.bin exists on the 1st partition of the SD-card and, if so, skips booting the mainOS */
+	run_command("setenv skipbsp1 0", 0);
+	run_command("mmc dev 0", 0);
+	run_command("mmc rescan", 0);
+	run_command("if test -e mmc 0:1 /$0030d8$.bin; then setenv skipbsp1 1; fi", 0);
 #endif
 
 	return 0;
