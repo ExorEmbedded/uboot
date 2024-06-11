@@ -344,7 +344,7 @@ static bool fallback_to_sha256(void)
 static int abortboot_key_sequence(int bootdelay)
 {
 	int abort;
-	uint64_t etime = endtick(bootdelay);
+	uint64_t etime = (get_ticks() + ((uint64_t)(bootdelay) * get_tbclk()) / 10);
 
 	if (IS_ENABLED(CONFIG_AUTOBOOT_FLUSH_STDIN))
 		flush_stdin();
@@ -425,6 +425,14 @@ static int abortboot(int bootdelay)
 
 	if (IS_ENABLED(CONFIG_SILENT_CONSOLE) && abort)
 		gd->flags &= ~GD_FLG_SILENT;
+
+#ifdef CONFIG_CMD_I2CHWCFG
+	if (abort)
+	{
+		extern void ena_rs232phy(void);
+		ena_rs232phy();
+	}
+#endif
 
 	return abort;
 }

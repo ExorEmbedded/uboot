@@ -32,6 +32,20 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define US06ETOPXX_VAL   163
 
+
+
+#ifdef CONFIG_CMD_I2CHWCFG
+#define US06_DXEN0_GPIO   IMX_GPIO_NR(4, 14)
+void ena_rs232phy(void)
+{
+  gpio_request(US06_DXEN0_GPIO, "us06_dxen0_out");
+  gpio_direction_output(US06_DXEN0_GPIO, 1);
+  udelay(1000);
+}
+#else
+void ena_rs232phy(void){}
+#endif
+
 /*
  * Read I2C SEEPROM infos and set env. variables accordingly
  */
@@ -73,6 +87,7 @@ static int USBgethwcfg(void)
 static iomux_v3_cfg_t const uart_pads[] = {
 	MX8MP_PAD_UART1_RXD__UART1_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX8MP_PAD_UART1_TXD__UART1_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
+	MX8MP_PAD_SAI1_TXD2__GPIO4_IO14   | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const wdog_pads[] = {
@@ -294,6 +309,7 @@ int board_late_init(void)
 	/* Get the system configuration from the I2C SEEPROM */
 	if(read_eeprom())
 	{
+		ena_rs232phy();
 		printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
 		USBgethwcfg();
 	}
@@ -325,6 +341,7 @@ int board_late_init(void)
 	}
 	else
 	{
+		ena_rs232phy();
 		puts ("WARNING: unknowm carrier hw code; using 'usom_undefined' board name. \n");
 		env_set("board_name", "usom_undefined");
 	}
