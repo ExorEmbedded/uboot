@@ -306,6 +306,10 @@ int board_late_init(void)
 #endif
 
 #if (defined(CONFIG_CMD_I2CHWCFG))
+#if defined(is_boot_from_usb)
+	if (is_boot_from_usb())
+		ena_rs232phy();
+#endif
 	/* Get the system configuration from the I2C SEEPROM */
 	if(read_eeprom())
 	{
