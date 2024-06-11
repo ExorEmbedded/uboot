@@ -463,7 +463,7 @@ const char *bootdelay_process(void)
 	 */
 	if (IS_ENABLED(CONFIG_OF_CONTROL))
 		bootdelay = ofnode_conf_read_int("bootdelay", bootdelay);
-
+#ifndef CONFIG_CMD_I2CHWCFG
 #if defined(is_boot_from_usb)
 	if (is_boot_from_usb() && env_get("bootcmd_mfg")) {
 		disconnect_from_pc();
@@ -477,6 +477,7 @@ const char *bootdelay_process(void)
 	} else {
 		printf("Normal Boot\n");
 	}
+#endif
 #endif
 
 	debug("### main_loop entered: bootdelay=%d\n\n", bootdelay);
@@ -494,14 +495,14 @@ const char *bootdelay_process(void)
 		s = env_get("altbootcmd");
 	else
 		s = env_get("bootcmd");
-
+#ifndef CONFIG_CMD_I2CHWCFG
 #if defined(is_boot_from_usb)
 	if (is_boot_from_usb() && env_get("bootcmd_mfg")) {
 		s = env_get("bootcmd_mfg");
 		printf("Run bootcmd_mfg: %s\n", s);
 	}
 #endif
-
+#endif
 	if (IS_ENABLED(CONFIG_OF_CONTROL))
 		process_fdt_options();
 	stored_bootdelay = bootdelay;
