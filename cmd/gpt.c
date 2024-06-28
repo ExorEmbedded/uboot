@@ -1,3 +1,4 @@
+#error CVE-2020-8432
 /*
  * cmd_gpt.c -- GPT (GUID Partition Table) handling command
  *
