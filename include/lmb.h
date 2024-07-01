@@ -3,6 +3,8 @@
 #ifdef __KERNEL__
 
 #include <asm/types.h>
+#include <asm/u-boot.h>
+
 /*
  * Logical memory blocks.
  *
@@ -32,6 +34,9 @@ struct lmb {
 extern struct lmb lmb;
 
 extern void lmb_init(struct lmb *lmb);
+extern void lmb_init_and_reserve(struct lmb *lmb, bd_t *bd, void *fdt_blob);
+extern void lmb_init_and_reserve_range(struct lmb *lmb, phys_addr_t base,
+				       phys_size_t size, void *fdt_blob);
 extern long lmb_add(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 extern long lmb_reserve(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 extern phys_addr_t lmb_alloc(struct lmb *lmb, phys_size_t size, ulong align);
@@ -39,6 +44,9 @@ extern phys_addr_t lmb_alloc_base(struct lmb *lmb, phys_size_t size, ulong align
 			    phys_addr_t max_addr);
 extern phys_addr_t __lmb_alloc_base(struct lmb *lmb, phys_size_t size, ulong align,
 			      phys_addr_t max_addr);
+extern phys_addr_t lmb_alloc_addr(struct lmb *lmb, phys_addr_t base,
+				  phys_size_t size);
+extern phys_size_t lmb_get_unreserved_size(struct lmb *lmb, phys_addr_t addr);
 extern int lmb_is_reserved(struct lmb *lmb, phys_addr_t addr);
 extern long lmb_free(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 
