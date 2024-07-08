@@ -31,8 +31,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #define US06ETOPXX_VAL   163
-
-
+#define US06CI24_VAL     164
 
 #ifdef CONFIG_CMD_I2CHWCFG
 #define US06_DXEN0_GPIO   IMX_GPIO_NR(4, 14)
@@ -342,6 +341,11 @@ int board_late_init(void)
 	{
 		env_set("board_name", "us06_etopxx");
 		env_set("fdtfile", "us06_etopxx.dtb");
+	}
+	else if(hwcode==US06CI24_VAL)
+	{
+		env_set("board_name", "us06_ci24");
+		env_set("fdtfile", "us06_ci24.dtb");
 	}
 	else
 	{
