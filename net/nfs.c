@@ -1,3 +1,4 @@
+#error CVE-2022-30767
 /*
  * NFS support driver - based on etherboot and U-BOOT's tftp.c
  *
