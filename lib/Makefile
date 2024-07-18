@@ -1,9 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2000-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# SPDX-License-Identifier:	GPL-2.0+
-#
 
 ifndef CONFIG_SPL_BUILD
 
@@ -20,6 +18,7 @@ obj-$(CONFIG_CMD_DHRYSTONE) += dhry/
 obj-$(CONFIG_ARCH_AT91) += at91/
 obj-$(CONFIG_IMX_TRUSTY_OS) += trusty/ql-tipc/
 obj-$(CONFIG_AES) += aes.o
+obj-$(CONFIG_AES) += aes/
 obj-y += charset.o
 obj-$(CONFIG_USB_TTY) += circbuf.o
 obj-y += crc7.o

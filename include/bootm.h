@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _BOOTM_H
@@ -41,7 +40,9 @@ void lynxkdi_boot(image_header_t *hdr);
 
 boot_os_fn *bootm_os_get_boot_func(int os);
 
+#if defined(CONFIG_FIT_SIGNATURE)
 int bootm_host_load_images(const void *fit, int cfg_noffset);
+#endif
 
 int boot_selected_os(int argc, char * const argv[], int state,
 		     bootm_headers_t *images, boot_os_fn *boot_fn);

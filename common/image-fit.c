@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2013, Google Inc.
  *
@@ -5,8 +6,6 @@
  *
  * (C) Copyright 2000-2006
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifdef USE_HOSTCC
@@ -392,7 +391,7 @@ void fit_image_print(const void *fit, int image_noffset, const char *p)
 	fit_image_get_comp(fit, image_noffset, &comp);
 	printf("%s  Compression:  %s\n", p, genimg_get_comp_name(comp));
 
-	ret = fit_image_get_data(fit, image_noffset, &data, &size);
+	ret = fit_image_get_data_and_size(fit, image_noffset, &data, &size);
 
 #ifndef USE_HOSTCC
 	printf("%s  Data Start:   ", p);
@@ -856,6 +855,79 @@ int fit_image_get_data_size(const void *fit, int noffset, int *data_size)
 }
 
 /**
+ * Get 'data-size-unciphered' property from a given image node.
+ *
+ * @fit: pointer to the FIT image header
+ * @noffset: component image node offset
+ * @data_size: holds the data-size property
+ *
+ * returns:
+ *     0, on success
+ *     -ENOENT if the property could not be found
+ */
+int fit_image_get_data_size_unciphered(const void *fit, int noffset,
+				       size_t *data_size)
+{
+	const fdt32_t *val;
+
+	val = fdt_getprop(fit, noffset, "data-size-unciphered", NULL);
+	if (!val)
+		return -ENOENT;
+
+	*data_size = (size_t)fdt32_to_cpu(*val);
+
+	return 0;
+}
+
+/**
+ * fit_image_get_data_and_size - get data and its size including
+ *				 both embedded and external data
+ * @fit: pointer to the FIT format image header
+ * @noffset: component image node offset
+ * @data: double pointer to void, will hold data property's data address
+ * @size: pointer to size_t, will hold data property's data size
+ *
+ * fit_image_get_data_and_size() finds data and its size including
+ * both embedded and external data. If the property is found
+ * its data start address and size are returned to the caller.
+ *
+ * returns:
+ *     0, on success
+ *     otherwise, on failure
+ */
+int fit_image_get_data_and_size(const void *fit, int noffset,
+				const void **data, size_t *size)
+{
+	bool external_data = false;
+	int offset;
+	int len;
+	int ret;
+
+	if (!fit_image_get_data_position(fit, noffset, &offset)) {
+		external_data = true;
+	} else if (!fit_image_get_data_offset(fit, noffset, &offset)) {
+		external_data = true;
+		/*
+		 * For FIT with external data, figure out where
+		 * the external images start. This is the base
+		 * for the data-offset properties in each image.
+		 */
+		offset += ((fdt_totalsize(fit) + 3) & ~3);
+	}
+
+	if (external_data) {
+		debug("External Data\n");
+		ret = fit_image_get_data_size(fit, noffset, &len);
+		*data = fit + offset;
+		*size = len;
+	} else {
+		ret = fit_image_get_data(fit, noffset, data, size);
+	}
+
+	return ret;
+}
+
+/**
  * fit_image_hash_get_algo - get hash algorithm name
  * @fit: pointer to the FIT format image header
  * @noffset: hash node offset
@@ -936,6 +1008,33 @@ static int fit_image_hash_get_ignore(const void *fit, int noffset, int *ignore)
 		*ignore = 0;
 	else
 		*ignore = *value;
+
+	return 0;
+}
+
+/**
+ * fit_image_cipher_get_algo - get cipher algorithm name
+ * @fit: pointer to the FIT format image header
+ * @noffset: cipher node offset
+ * @algo: double pointer to char, will hold pointer to the algorithm name
+ *
+ * fit_image_cipher_get_algo() finds cipher algorithm property in a given
+ * cipher node. If the property is found its data start address is returned
+ * to the caller.
+ *
+ * returns:
+ *     0, on success
+ *     -1, on failure
+ */
+int fit_image_cipher_get_algo(const void *fit, int noffset, char **algo)
+{
+	int len;
+
+	*algo = (char *)fdt_getprop(fit, noffset, FIT_ALGO_PROP, &len);
+	if (!*algo) {
+		fit_get_debug(fit, noffset, FIT_ALGO_PROP, len);
+		return -1;
+	}
 
 	return 0;
 }
@@ -1091,7 +1190,7 @@ int fit_image_verify(const void *fit, int image_noffset)
 	int ret;
 
 	/* Get image data and data length */
-	if (fit_image_get_data(fit, image_noffset, &data, &size)) {
+	if (fit_image_get_data_and_size(fit, image_noffset, &data, &size)) {
 		err_msg = "Can't get image data/size";
 		goto error;
 	}
@@ -1201,6 +1300,32 @@ int fit_all_image_verify(const void *fit)
 	}
 	return 1;
 }
+
+#ifdef CONFIG_FIT_CIPHER
+static int fit_image_uncipher(const void *fit, int image_noffset,
+			      void **data, size_t *size)
+{
+	int cipher_noffset, ret;
+	void *dst;
+	size_t size_dst;
+
+	cipher_noffset = fdt_subnode_offset(fit, image_noffset,
+					    FIT_CIPHER_NODENAME);
+	if (cipher_noffset < 0)
+		return 0;
+
+	ret = fit_image_decrypt_data(fit, image_noffset, cipher_noffset,
+				     *data, *size, &dst, &size_dst);
+	if (ret)
+		goto out;
+
+	*data = dst;
+	*size = size_dst;
+
+ out:
+	return ret;
+}
+#endif /* CONFIG_FIT_CIPHER */
 
 /**
  * fit_image_check_os - check whether image node is of a given os type
@@ -1846,11 +1971,23 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL_OK);
 
 	/* get image data address and length */
-	if (fit_image_get_data(fit, noffset, &buf, &size)) {
+	if (fit_image_get_data_and_size(fit, noffset, &buf, &size)) {
 		printf("Could not find %s subimage data!\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_GET_DATA);
 		return -ENOENT;
 	}
+
+#ifdef CONFIG_FIT_CIPHER
+	/* Decrypt data before uncompress/move */
+	if (IMAGE_ENABLE_DECRYPT) {
+		puts("   Decrypting Data ... ");
+		if (fit_image_uncipher(fit, noffset, &buf, &size)) {
+			puts("Error\n");
+			return -EACCES;
+		}
+		puts("OK\n");
+	}
+#endif
 
 #if !defined(USE_HOSTCC) && defined(CONFIG_FIT_IMAGE_POST_PROCESS)
 	/* perform any post-processing on the image data */

@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2008 Semihalf
  *
  * (C) Copyright 2000-2005
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  ********************************************************************
  * NOTE: This header file defines an interface to U-Boot. Including
  * this (unmodified) header file in another file is considered normal
@@ -258,7 +257,7 @@ enum {
 	IH_TYPE_MXSIMAGE,		/* Freescale MXSBoot Image	*/
 	IH_TYPE_GPIMAGE,		/* TI Keystone GPHeader Image	*/
 	IH_TYPE_ATMELIMAGE,		/* ATMEL ROM bootable Image	*/
-	IH_TYPE_SOCFPGAIMAGE,		/* Altera SOCFPGA Preloader	*/
+	IH_TYPE_SOCFPGAIMAGE,		/* Altera SOCFPGA CV/AV Preloader */
 	IH_TYPE_X86_SETUP,		/* x86 setup.bin Image		*/
 	IH_TYPE_LPC32XXIMAGE,		/* x86 setup.bin Image		*/
 	IH_TYPE_LOADABLE,		/* A list of typeless images	*/
@@ -272,6 +271,9 @@ enum {
 	IH_TYPE_TEE,            /* Trusted Execution Environment OS Image */
 	IH_TYPE_FIRMWARE_IVT,		/* Firmware Image with HABv4 IVT */
 	IH_TYPE_PMMC,            /* TI Power Management Micro-Controller Firmware */
+	IH_TYPE_STM32IMAGE,		/* STMicroelectronics STM32 Image */
+	IH_TYPE_SOCFPGAIMAGE_V1,	/* Altera SOCFPGA A10 Preloader	*/
+	IH_TYPE_MTKIMAGE,		/* MediaTek BootROM loadable Image */
 
 	IH_TYPE_COUNT,			/* Number of image types */
 };
@@ -895,6 +897,10 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size);
 #define FIT_IGNORE_PROP		"uboot-ignore"
 #define FIT_SIG_NODENAME	"signature"
 
+/* cipher node */
+#define FIT_CIPHER_NODENAME	"cipher"
+#define FIT_ALGO_PROP		"algo"
+
 /* image node */
 #define FIT_DATA_PROP		"data"
 #define FIT_DATA_POSITION_PROP	"data-position"
@@ -982,12 +988,20 @@ int fit_image_get_data_offset(const void *fit, int noffset, int *data_offset);
 int fit_image_get_data_position(const void *fit, int noffset,
 				int *data_position);
 int fit_image_get_data_size(const void *fit, int noffset, int *data_size);
+int fit_image_get_data_size_unciphered(const void *fit, int noffset,
+				       size_t *data_size);
+int fit_image_get_data_and_size(const void *fit, int noffset,
+				const void **data, size_t *size);
 
 int fit_image_hash_get_algo(const void *fit, int noffset, char **algo);
 int fit_image_hash_get_value(const void *fit, int noffset, uint8_t **value,
 				int *value_len);
 
 int fit_set_timestamp(void *fit, int noffset, time_t timestamp);
+
+int fit_cipher_data(const char *keydir, void *keydest, void *fit,
+		    const char *comment, int require_keys,
+		    const char *engine_id, const char *cmdname);
 
 /**
  * fit_add_verification_data() - add verification data to FIT image nodes
@@ -1016,6 +1030,7 @@ int fit_add_verification_data(const char *keydir, void *keydest, void *fit,
 int fit_image_verify(const void *fit, int noffset);
 int fit_config_verify(const void *fit, int conf_noffset);
 int fit_all_image_verify(const void *fit);
+int fit_config_decrypt(const void *fit, int conf_noffset);
 int fit_image_check_os(const void *fit, int noffset, uint8_t os);
 int fit_image_check_arch(const void *fit, int noffset, uint8_t arch);
 int fit_image_check_type(const void *fit, int noffset, uint8_t type);
@@ -1024,6 +1039,10 @@ int fit_check_format(const void *fit);
 
 int fit_conf_find_compat(const void *fit, const void *fdt);
 int fit_conf_get_node(const void *fit, const char *conf_uname);
+int fit_conf_get_prop_node_count(const void *fit, int noffset,
+		const char *prop_name);
+int fit_conf_get_prop_node_index(const void *fit, int noffset,
+		const char *prop_name, int index);
 
 /**
  * fit_conf_get_prop_node() - Get node refered to by a configuration
@@ -1093,6 +1112,7 @@ struct image_sign_info {
 	const char *require_keys;	/* Value for 'required' property */
 	const char *engine_id;		/* Engine to use for signing */
 };
+
 #endif /* Allow struct image_region to always be defined for rsa.h */
 
 /* A part of an image, used for hashing */
@@ -1224,6 +1244,11 @@ int fit_image_verify_required_sigs(const void *fit, int image_noffset,
 int fit_image_check_sig(const void *fit, int noffset, const void *data,
 		size_t size, int required_keynode, char **err_msgp);
 
+int fit_image_decrypt_data(const void *fit,
+			   int image_noffset, int cipher_noffset,
+			   const void *data, size_t size,
+			   void **data_unciphered, size_t *size_unciphered);
+
 /**
  * fit_region_make_list() - Make a list of regions to hash
  *
@@ -1249,6 +1274,64 @@ static inline int fit_image_check_target_arch(const void *fdt, int node)
 	return 0;
 #endif
 }
+
+/*
+ * At present we only support ciphering on the host, and unciphering on the
+ * device
+ */
+#if defined(USE_HOSTCC)
+# if defined(CONFIG_FIT_CIPHER)
+#  define IMAGE_ENABLE_ENCRYPT	1
+#  define IMAGE_ENABLE_DECRYPT	1
+#  include <openssl/evp.h>
+# else
+#  define IMAGE_ENABLE_ENCRYPT	0
+#  define IMAGE_ENABLE_DECRYPT	0
+# endif
+#else
+# define IMAGE_ENABLE_ENCRYPT	0
+# define IMAGE_ENABLE_DECRYPT	CONFIG_IS_ENABLED(FIT_CIPHER)
+#endif
+
+/* Information passed to the ciphering routines */
+struct image_cipher_info {
+	const char *keydir;		/* Directory containing keys */
+	const char *keyname;		/* Name of key to use */
+	const char *ivname;		/* Name of IV to use */
+	const void *fit;		/* Pointer to FIT blob */
+	int node_noffset;		/* Offset of the cipher node */
+	const char *name;		/* Algorithm name */
+	struct cipher_algo *cipher;	/* Cipher algorithm information */
+	const void *fdt_blob;		/* FDT containing key and IV */
+	const void *key;		/* Value of the key */
+	const void *iv;			/* Value of the IV */
+	size_t size_unciphered;		/* Size of the unciphered data */
+};
+
+struct cipher_algo {
+	const char *name;		/* Name of algorithm */
+	int key_len;			/* Length of the key */
+	int iv_len;			/* Length of the IV */
+
+#if IMAGE_ENABLE_ENCRYPT
+	const EVP_CIPHER * (*calculate_type)(void);
+#endif
+
+	int (*encrypt)(struct image_cipher_info *info,
+		       const unsigned char *data, int data_len,
+		       unsigned char **cipher, int *cipher_len);
+
+	int (*add_cipher_data)(struct image_cipher_info *info,
+			       void *keydest);
+
+	int (*decrypt)(struct image_cipher_info *info,
+		       const void *cipher, size_t cipher_len,
+		       void **data, size_t *data_len);
+};
+
+int fit_image_cipher_get_algo(const void *fit, int noffset, char **algo);
+
+struct cipher_algo *image_get_cipher_algo(const char *full_name);
 
 #ifdef CONFIG_FIT_VERBOSE
 #define fit_unsupported(msg)	printf("! %s:%d " \

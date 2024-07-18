@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Copyright (c) 1995, 1996, 2001, 2002
  * Erik Theisen.  All rights reserved.
- *
- * SPDX-License-Identifier:	BSD-3-Clause
  */
 
 /*
