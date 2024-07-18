@@ -1,3 +1,9 @@
+#error CVE-2019-14197
+#error CVE-2019-14200
+#error CVE-2019-14201
+#error CVE-2019-14202
+#error CVE-2019-14203
+#error CVE-2019-14204
 #error CVE-2022-30767
 /*
  * NFS support driver - based on etherboot and U-BOOT's tftp.c
