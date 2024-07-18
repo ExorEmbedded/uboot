@@ -1,4 +1,8 @@
+#error CVE-2019-14194
+#error CVE-2019-14195
+#error CVE-2019-14196
 #error CVE-2019-14197
+#error CVE-2019-14198
 #error CVE-2019-14200
 #error CVE-2019-14201
 #error CVE-2019-14202
