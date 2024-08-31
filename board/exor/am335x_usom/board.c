@@ -222,6 +222,33 @@ static int USBgethwcfg(void)
   return 0;
 }
 
+/*
+ * Check for factory mode enabled and eventually disable the related functionalities
+ * 0=no factory mode
+ * 1=factory mode enabled
+ */
+#if (defined(CONFIG_CMD_I2CHWCFG))
+static int check_factory_mode(void)
+{
+    unsigned char factory_mode = 0;
+
+    i2c_read(0x50, 0xa3, 1, &factory_mode, 1);
+    if(factory_mode != 0xc3)
+        return 0;
+#if (!defined(CONFIG_SPL_BUILD))    
+    gd->flags |= GD_FLG_DISABLE_CONSOLE;
+    
+    setenv("bootcmd", CFG_BOOTCMD_FACTORY_MODE);
+    setenv("altbootcmd", CFG_ALTBOOTCMD_FACTORY_MODE);
+#endif    
+    return 1;
+}
+#else
+static int check_factory_mode(void)
+{
+    return 0;
+}
+#endif
 
 #if defined(CONFIG_SPL_BUILD)
 static const struct ddr_data ddr3_data = {
@@ -366,6 +393,9 @@ void sdram_init(void)
  */
 int spl_board_mmc_initialize(void)
 {
+  if(check_factory_mode())
+    return -1;
+    
   return omap_mmc_init(0, 0, 0, -1, -1);
 }
 
@@ -414,6 +444,7 @@ int board_late_init(void)
   unsigned long hwcode;
   unsigned long rs232phyena = 0;
   unsigned long jumperflagsl = 0;
+  int factory_mode = 0;
   
   /* Ticket 1124: Change DDR priority policy to avoid possible LCD flickering due to FIFO_UNDERRUN events in display refresh when 
    * using 10" display and high DDR bus load is present (ie VNC)
@@ -428,7 +459,9 @@ int board_late_init(void)
     printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
     USBgethwcfg();
   }
-  
+  else
+    factory_mode = check_factory_mode();
+    
   /* Enable the rs232 phy based on "rs232_txen" environment variable */
   tmp = getenv("rs232_txen");
   if(tmp)
@@ -520,7 +553,12 @@ int board_late_init(void)
     setenv("bootcmd", CONFIG_ANDROID_BOOTCOMMAND);
   }
   else
-    setenv("bootcmd", CONFIG_BOOTCOMMAND);
+  {
+    if(factory_mode)
+      setenv("bootcmd", CFG_BOOTCMD_FACTORY_MODE);
+    else
+      setenv("bootcmd", CONFIG_BOOTCOMMAND);
+  }
 
 #ifdef CONFIG_CMD_WCE
   run_command("if test -e mmc 1:6 /$0030d8wce$.bin; then setenv swflag_wce 1; fi", 0);

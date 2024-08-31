@@ -234,6 +234,22 @@
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 
 
+#define CFG_BOOTCMD_FACTORY_MODE  \
+	"run findfdt; " \
+	"if test $skipbsp1 = 0; then " \
+	"echo Try booting Linux from EMMC, main BSP...;" \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:3; " \
+	"setenv mmcroot /dev/mmcblk1p3 ro; " \
+	"run mmcboot;" \
+	"fi; " \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;" 
+	
 #define CONFIG_SYS_ALT_BOOTCOMMAND \
 	"i2c mw 68 19 0; " \
 	"setenv mmcdev 0; " \
@@ -249,11 +265,18 @@
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 
 
-#define CONFIG_ANDROID_BOOTCOMMAND \
-	"setenv mmcdev 0; " \
+#define CFG_ALTBOOTCMD_FACTORY_MODE  \
+	"i2c mw 68 19 0; " \
 	"run findfdt; " \
-	"echo Try booting Linux from SD-card...;" \
-	"run mmcboot;" \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;" 
+	
+#define CONFIG_ANDROID_BOOTCOMMAND \
+	"run findfdt; " \
 	"if test $skipbsp1 = 0; then " \
 	"echo Try booting Android from EMMC, main BSP...;" \
 	"setenv bootargs console=ttyO0,115200n8 androidboot.console=ttyO0 rootwait ro; " \
@@ -272,10 +295,7 @@
 /* WCE6 boot command
  */	
 #define CONFIG_WCE_BOOTCOMMAND \
-	"setenv mmcdev 0; " \
 	"run findfdt; " \
-	"echo Try booting Linux from SD-card...;" \
-	"run mmcboot;" \
 	"if test $skipbsp1 = 0; then " \
 	"echo Try booting WCE EMMC, main BSP...;" \
 	"mmc dev 1; " \
@@ -378,4 +398,5 @@
 #define CONFIG_AM335X_LCD
 #define CONFIG_AM335X_LCD_BASE (0x8D000000)
 
+#define CONFIG_DISABLE_CONSOLE
 #endif	/* ! __CONFIG_AM335X_EVM_H */

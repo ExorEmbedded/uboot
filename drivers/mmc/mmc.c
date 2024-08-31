@@ -1421,7 +1421,8 @@ int spl_mmc_initialize(void)
   INIT_LIST_HEAD (&mmc_devices);
   cur_dev_num = 0;
   
-  spl_board_mmc_initialize();
+  if(spl_board_mmc_initialize())
+    return -1;
   
   do_preinit();
   return 0;
