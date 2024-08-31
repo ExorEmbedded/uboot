@@ -182,6 +182,40 @@ static int USBgethwcfg(void)
   return 0;
 }
 
+/*
+ * Check for factory mode enabled and eventually disable the related functionalities
+ * 0=no factory mode
+ * 1=factory mode enabled
+ */
+#if (defined(CONFIG_CMD_I2CHWCFG))
+static int check_factory_mode(void)
+{
+    unsigned char factory_mode = 0;
+    char* tmp;
+    unsigned long hwcode = 0;
+
+    i2c_read(0x50, 0xa3, 1, &factory_mode, 1);
+    if(factory_mode != 0xc3)
+        return 0;
+   
+    tmp = getenv("hw_code");
+    if(tmp)
+        hwcode = (simple_strtoul (tmp, NULL, 10))&0xff;
+
+    if( (hwcode != JSMART_VAL) && (hwcode != JSMARTQ_VAL) && (hwcode != JSMARTTTL_VAL) )
+        gd->flags |= GD_FLG_DISABLE_CONSOLE;
+    
+    setenv("bootcmd", CFG_BOOTCMD_FACTORY_MODE);
+    setenv("altbootcmd", CFG_ALTBOOTCMD_FACTORY_MODE);
+    return 1;
+}
+#else
+static int check_factory_mode(void)
+{
+    return 0;
+}
+#endif
+
 int dram_init(void)
 {
 	gd->ram_size = ((ulong)CONFIG_DDR_MB * 1024 * 1024);
@@ -756,6 +790,7 @@ int board_late_init(void)
   unsigned long rs232phyena = 0;
   unsigned long jumperflagsl = 0;
   unsigned char value = 0;
+  int factory_mode = 0;
   
   setenv("silent", "1"); 
   gd->flags |= GD_FLG_SILENT;
@@ -816,6 +851,8 @@ int board_late_init(void)
     printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
     USBgethwcfg();
   }
+  else
+    factory_mode = check_factory_mode();
   
   /* Set the "board_name" env. variable according with the "hw_code" */
   tmp = getenv("hw_code");
@@ -905,7 +942,12 @@ int board_late_init(void)
     setenv("bootcmd", CONFIG_ANDROID_BOOTCOMMAND);
   }
   else
-    setenv("bootcmd", CONFIG_BOOTCOMMAND);
+  {
+    if(factory_mode)
+      setenv("bootcmd", CFG_BOOTCMD_FACTORY_MODE);
+    else
+      setenv("bootcmd", CONFIG_BOOTCOMMAND);
+  }
   return 0;
 }
 

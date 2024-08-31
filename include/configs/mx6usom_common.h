@@ -296,6 +296,22 @@
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 
 
+#define CFG_BOOTCMD_FACTORY_MODE \
+	"run findfdt; " \
+	"if test $skipbsp1 = 0; then " \
+	"echo Try booting Linux from EMMC, main BSP...;" \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:3; " \
+	"setenv mmcroot /dev/mmcblk1p3 ro; " \
+	"run mmcboot;" \
+	"fi; " \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;" 
+	
 #define CONFIG_SYS_ALT_BOOTCOMMAND \
 	"i2c mw 68 19 0; " \
 	"setenv mmcdev 0; " \
@@ -304,6 +320,16 @@
 	"run mmcboot;" \
 	"echo Try booting Linux from USB stick...;" \
 	"run usbboot;" \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;" 
+
+#define CFG_ALTBOOTCMD_FACTORY_MODE \
+	"i2c mw 68 19 0; " \
+	"run findfdt; " \
 	"echo Try booting Linux from EMMC, recovery BSP...;" \
 	"setenv fastboot n; " \
 	"setenv mmcdev 1; " \
@@ -398,5 +424,5 @@
 #undef  CONFIG_SYS_BOOTCOUNT_ADDR
 #define CONFIG_SYS_BOOTCOUNT_ADDR 0x19
 
-
+#define CONFIG_DISABLE_CONSOLE
 #endif                         /* __MX6USOMUS03_COMMON_CONFIG_H */
