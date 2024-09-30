@@ -336,7 +336,7 @@ const char *bootdelay_process(void)
 
 	s = env_get("bootdelay");
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
-
+#if 0
 #if defined(is_boot_from_usb)
 	if (is_boot_from_usb() && env_get("bootcmd_mfg")) {
 		disconnect_from_pc();
@@ -351,7 +351,7 @@ const char *bootdelay_process(void)
 		printf("Normal Boot\n");
 	}
 #endif
-
+#endif
 #ifdef CONFIG_OF_CONTROL
 	bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
 			bootdelay);
@@ -377,14 +377,14 @@ const char *bootdelay_process(void)
 	} else
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 		s = env_get("bootcmd");
-
+#if 0
 #if defined(is_boot_from_usb)
 	if (is_boot_from_usb() && env_get("bootcmd_mfg")) {
 		s = env_get("bootcmd_mfg");
 		printf("Run bootcmd_mfg: %s\n", s);
 	}
 #endif
-
+#endif
 	process_fdt_options(gd->fdt_blob);
 	stored_bootdelay = bootdelay;
 

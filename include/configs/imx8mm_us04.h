@@ -238,6 +238,22 @@
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 
 
+#define CFG_BOOTCMD_FACTORY_MODE \
+	"run findfdt; " \
+	"if test $skipbsp1 = 0; then " \
+	"echo Try booting Linux from EMMC, main BSP...;" \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:3; " \
+	"setenv mmcroot /dev/mmcblk1p3 ro; " \
+	"run mmcboot;" \
+	"fi; " \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;"
+
 #ifdef CONFIG_TARGET_IMX8MM_NS06
 #define CFG_SYS_ALT_BOOTCOMMAND \
 	"i2c mw 6f 20 0; " \
@@ -254,7 +270,18 @@
 	"setenv bootpart 1:2; " \
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 		
-#else	
+
+#define CFG_ALTBOOTCMD_FACTORY_MODE \
+	"i2c mw 6f 20 0; " \
+	"run findfdt; " \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;"
+
+#else
 #define CFG_SYS_ALT_BOOTCOMMAND \
 	"i2c mw 68 19 0; " \
 	"setenv mmcdev 0; " \
@@ -270,6 +297,17 @@
 	"setenv bootpart 1:2; " \
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 		
+
+#define CFG_ALTBOOTCMD_FACTORY_MODE \
+	"i2c mw 68 19 0; " \
+	"run findfdt; " \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;"
+
 #endif
 	
 /* Link Definitions */
@@ -345,7 +383,7 @@
 #define CONFIG_SYS_PBSIZE              (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
 #define CONFIG_IMX_BOOTAUX
-
+#define CONFIG_DISABLE_CONSOLE
 /* USDHC */
 #define CONFIG_CMD_MMC
 #define CONFIG_FSL_ESDHC
