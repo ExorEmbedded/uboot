@@ -93,7 +93,10 @@ static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 		debug("%s: no st,mem-name\n", __func__);
 		return -EINVAL;
 	}
+
+#if !defined(CONFIG_SPL_DISABLE_BANNER_PRINT)
 	printf("RAM: %s\n", config.info.name);
+#endif
 
 	for (idx = 0; idx < ARRAY_SIZE(param); idx++) {
 		ret = dev_read_u32_array(dev, param[idx].name,

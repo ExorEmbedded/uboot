@@ -141,6 +141,14 @@ int board_vddcore_set(u32 opp_voltage_mv)
 #define RCC_PLLNFRACR_FRACV_SHIFT 3
 #define RCC_PLLNFRACR_FRACV_MASK  GENMASK(15, 3)
 #define RCC_PLLNFRACR_FRACLE      BIT(16)
+
+static int _exor_fastboot;
+int exor_is_fastboot(void)
+{
+	return _exor_fastboot;
+}
+
+
 /* 
  * Set the MPU clock frequency to 800Mhz 
  */
@@ -429,12 +437,16 @@ int board_late_init(void)
 			  Set800MhzMPU();
 		  }
 	  }
-  
-  /* Check if file $0030d8$.bin exists on the 1st partition of the SD-card and, if so, skips booting the mainOS */
-  run_command("setenv skipbsp1 0", 0);
-  run_command("mmc dev 0", 0);
-  run_command("mmc rescan", 0);
-  run_command("if test -e mmc 0:1 /$0030d8$.bin; then setenv skipbsp1 1; fi", 0);
+
+
+  if (!exor_is_fastboot())
+  {
+    /* Check if file $0030d8$.bin exists on the 1st partition of the SD-card and, if so, skips booting the mainOS */
+    run_command("setenv skipbsp1 0", 0);
+    run_command("mmc dev 0", 0);
+    run_command("mmc rescan", 0);
+    run_command("if test -e mmc 0:1 /$0030d8$.bin; then setenv skipbsp1 1; fi", 0);
+  }
 #endif    
   return 0;
 }
@@ -613,10 +625,12 @@ void board_usbotg_init(void)
 	stm32mp_otg_data.tx_fifo_sz = fdtdec_get_int(blob, node,
 						     "g-tx-fifo-size", 0);
 
+	/* USB1600 device is never present
 	if (fdtdec_get_bool(blob, node, "usb1600")) {
 		stusb1600_init();
 		return;
 	}
+	*/
 
 	/* Enable voltage level detector */
 	if (!(fdtdec_parse_phandle_with_args(blob, node, "usb33d-supply",
@@ -1062,10 +1076,12 @@ int board_init(void)
 		pr_debug("probe pincontrol = %s\n", dev->name);
 	}
 
+	/* keys and lEDs not used in U-Boot
 	board_key_check();
 
 	if (IS_ENABLED(CONFIG_LED))
 		led_default_state();
+	*/
 
 #ifdef CONFIG_NSXX_TARGET
 	ns02_board_fixup();

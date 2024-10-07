@@ -48,17 +48,22 @@ void main_loop(void)
 	env_set("ver", version_string);  /* set version variable */
 #endif /* CONFIG_VERSION_VARIABLE */
 
-	cli_init();
-
-	run_preboot_environment_command();
+	if (!exor_is_fastboot())
+	{
+		cli_init();
+		run_preboot_environment_command();
+	}
 
 #if defined(CONFIG_UPDATE_TFTP)
 	update_tftp(0UL, NULL, NULL);
 #endif /* CONFIG_UPDATE_TFTP */
 
 	s = bootdelay_process();
-	if (cli_process_fdt(&s))
-		cli_secure_boot_cmd(s);
+	if (!exor_is_fastboot())
+	{
+		if (cli_process_fdt(&s))
+			cli_secure_boot_cmd(s);
+	}
 
 	autoboot_command(s);
 

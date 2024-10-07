@@ -501,6 +501,9 @@ static int initr_enable_interrupts(void)
 #ifdef CONFIG_CMD_NET
 static int initr_ethaddr(void)
 {
+	if (exor_is_fastboot())
+		return 0;
+
 	bd_t *bd = gd->bd;
 
 	/* kept around for legacy kernels only ... ignore the next section */
@@ -567,6 +570,9 @@ static int initr_bbmii(void)
 #ifdef CONFIG_CMD_NET
 static int initr_net(void)
 {
+	if (exor_is_fastboot())
+		return 0;
+
 	puts("Net:   ");
 	eth_initialize();
 #if defined(CONFIG_RESET_PHY_R)
@@ -687,6 +693,10 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_DM
 	initr_dm,
 #endif
+#ifdef CONFIG_MMC
+	initr_mmc,
+#endif
+	initr_env,
 #if defined(CONFIG_ARM) || defined(CONFIG_NDS32) || defined(CONFIG_RISCV) || \
 	defined(CONFIG_SANDBOX)
 	board_init,	/* Setup chipselects */

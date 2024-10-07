@@ -298,8 +298,9 @@ const char *bootdelay_process(void)
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 
 #ifdef CONFIG_OF_CONTROL
-	bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
-			bootdelay);
+	if (!exor_is_fastboot())
+		bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
+				bootdelay);
 #endif
 
 	debug("### main_loop entered: bootdelay=%d\n\n", bootdelay);
@@ -317,9 +318,16 @@ const char *bootdelay_process(void)
 	if (bootcount_error())
 		s = env_get("altbootcmd");
 	else
-		s = env_get("bootcmd");
+	{
+		if (exor_is_fastboot())
+			s = env_get("fastbootcmd");
+		else
+			s = env_get("bootcmd");
+	}
 
-	process_fdt_options(gd->fdt_blob);
+	if (!exor_is_fastboot())
+		process_fdt_options(gd->fdt_blob);
+
 	stored_bootdelay = bootdelay;
 
 	return s;

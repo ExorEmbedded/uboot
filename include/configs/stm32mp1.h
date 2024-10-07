@@ -226,6 +226,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"altbootcmd="CFG_SYS_ALT_BOOTCOMMAND"\0"\
+	"fastbootcmd="CFG_SYS_FAST_BOOTCOMMAND"\0"\
 	"silent=1\0" \
 	"bootlimit=3\0" \
 	"fdtaddr=0xc4000000\0" \
@@ -357,6 +358,15 @@
 	"setenv bootpart 1:2; " \
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 
+
+#define CFG_SYS_FAST_BOOTCOMMAND \
+	"setenv verify n; " \
+	"setenv mmcdev 1; " \
+	"setenv mmcroot /dev/mmcblk1p3 ro; " \
+	"run mmcargs; " \
+	"load mmc ${bootpart} ${loadaddr} ${bootdir}/${bootfile}; " \
+	"load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}; " \
+	"bootz ${loadaddr} - ${fdtaddr}; "
 
 #define CFG_SYS_ALT_BOOTCOMMAND \
 	"bootcount reset; " \
