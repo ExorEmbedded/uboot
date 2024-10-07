@@ -267,6 +267,32 @@ static int USBgethwcfg(void)
 }
 #endif /* #ifdef CONFIG_NSXX_TARGET */
 
+/*
+ * Check for factory mode enabled and eventually disable the related functionalities
+ * 0=no factory mode
+ * 1=factory mode enabled
+ */
+#if (defined(CONFIG_CMD_I2CHWCFG))
+static int check_factory_mode(void)
+{
+    unsigned char factory_mode = 0;
+    i2c_read(0x50, 0xa3, 1, &factory_mode, 1);
+    if(factory_mode != 0xc3)
+        return 0;
+
+    gd->flags |= GD_FLG_DISABLE_CONSOLE;
+
+    env_set("bootcmd", CFG_BOOTCMD_FACTORY_MODE);
+    env_set("altbootcmd", CFG_ALTBOOTCMD_FACTORY_MODE);
+    return 1;
+}
+#else
+static int check_factory_mode(void)
+{
+    return 0;
+}
+#endif
+
 
 int checkboard(void)
 {
@@ -390,9 +416,12 @@ int board_late_init(void)
   /* Get the system configuration from the I2C SEEPROM */
   if(read_eeprom())
   {
+	  run_command("setenv silent", 0);
 	  printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
 	  USBgethwcfg();
   }
+  else
+	  check_factory_mode();
  
   /* Set the "board_name" env. variable according with the "hw_code" */
   tmp = env_get("hw_code");

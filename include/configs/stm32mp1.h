@@ -383,5 +383,31 @@
 	"setenv mmcroot /dev/mmcblk1p2 ro; " \
 	"run mmcboot;" 
 
+#define CFG_BOOTCMD_FACTORY_MODE   \
+	"run findfdt; " \
+	"if test $skipbsp1 = 0; then " \
+	"echo Try booting Linux from EMMC, main BSP...;" \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:3; " \
+	"setenv mmcroot /dev/mmcblk1p3 ro; " \
+	"run mmcboot;" \
+	"fi; " \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;"
+
+#define CFG_ALTBOOTCMD_FACTORY_MODE   \
+	"bootcount reset; " \
+	"run findfdt; " \
+	"echo Try booting Linux from EMMC, recovery BSP...;" \
+	"setenv fastboot n; " \
+	"setenv mmcdev 1; " \
+	"setenv bootpart 1:2; " \
+	"setenv mmcroot /dev/mmcblk1p2 ro; " \
+	"run mmcboot;"
+
 #endif /* #ifdef CONFIG_NSXX_TARGET */
 #endif /* __CONFIG_H */
