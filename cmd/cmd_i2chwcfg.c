@@ -215,6 +215,14 @@ bool getBitInSWModuleFlagArea(unsigned int bitIndex)
   return (SWModuleArea[bitIndex/8] & (1 << (bitIndex & 7)))? true : false;
 }
 
+unsigned char read_factory_mode_flag(void)
+{
+  unsigned char factory_mode = 0;
+
+  i2c_seep_read(0x50, 0xa3, 1, &factory_mode, 1);
+  return factory_mode;
+}
+
 /* ======================================================================
  * Helper function indicating if the buffer contents define a valid 
  * factory section, format >= 3. Returns 1 if valid, 0 otherwise.

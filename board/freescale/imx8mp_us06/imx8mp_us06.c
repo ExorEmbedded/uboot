@@ -79,6 +79,48 @@ static int USBgethwcfg(void)
   return 0;
 }
 
+/*
+ * Check for factory mode enabled and eventually disable the related functionalities
+ * 0=no factory mode
+ * 1=factory mode enabled
+ */
+#if (defined(CONFIG_CMD_I2CHWCFG))
+static int check_factory_mode(void)
+{
+	extern unsigned char read_factory_mode_flag(void);
+    unsigned char factory_mode = 0;
+#if defined(is_boot_from_usb)
+	if (is_boot_from_usb())
+    {
+        int n;
+        ena_rs232phy();
+        printf("Boot from USB detected ...\n");
+        for(n=0; n<10; n++)
+        {
+            printf(".");
+            mdelay(200);
+        }
+        printf("\n");
+        return 0;
+    }
+#endif
+    factory_mode = read_factory_mode_flag();
+    if(factory_mode != 0xc3)
+	{
+		return 0;
+	}
+
+	gd->flags |= GD_FLG_DISABLE_CONSOLE;
+    env_set("bootcmd", CFG_BOOTCMD_FACTORY_MODE);
+    env_set("altbootcmd", CFG_ALTBOOTCMD_FACTORY_MODE);
+    return 1;
+}
+#else
+static int check_factory_mode(void)
+{
+    return 0;
+}
+#endif
 
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
 #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
@@ -315,6 +357,10 @@ int board_late_init(void)
 		ena_rs232phy();
 		printf("Failed to read the HW cfg from the I2C SEEPROM: trying to load it from USB ...\n");
 		USBgethwcfg();
+	}
+    else
+	{
+		check_factory_mode();
 	}
 
 	/* Set the "board_name" env. variable according with the "hw_code" */
