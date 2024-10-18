@@ -232,6 +232,104 @@ static void ns02_board_fixup(void)
 		printf("%s: can't set_value for soft_rst_gpio", __func__);
 }
 
+#if (defined(CONFIG_CMD_I2CHWCFG))
+/*
+ * Specific NS02 WUxx board fixup sequence, to drive the front LED and the keybd/lcd backlight
+ * according with the bootcounter range
+ */
+static void ns02_wuxx_fixup(void)
+{
+	ofnode node;
+	struct gpio_desc kbd_en_gpio;
+	struct gpio_desc bck_dimm_gpio;
+	struct gpio_desc bl_en_gpio;
+
+	unsigned long bootcount;
+	unsigned long bootlimit;
+	unsigned long fastboot_bootlimit = 20;
+
+	/* Get the gpio lines to handle the keyboard and lcd backlight */
+	node = ofnode_path("/ns02_rst");
+	if (!ofnode_valid(node))
+	{
+		printf("%s: WARNING!!! No ns02_rst node found.\n", __func__);
+		return;
+	}
+
+	if (gpio_request_by_name_nodev(node, "bl_en_gpio", 0, &bl_en_gpio, GPIOD_IS_OUT))
+	{
+		printf("%s: could not find bl_en_gpio\n", __func__);
+		return;
+	}
+
+	if (gpio_request_by_name_nodev(node, "kbd_en_gpio", 0, &kbd_en_gpio, GPIOD_IS_OUT))
+	{
+		printf("%s: could not find kbd_en_gpio\n", __func__);
+		return;
+	}
+
+	if (gpio_request_by_name_nodev(node, "bck_dimm_gpio", 0, &bck_dimm_gpio, GPIOD_IS_OUT))
+	{
+		printf("%s: could not find bck_dimm_gpio\n", __func__);
+		return;
+	}
+
+	/* Perform the required actions, based on the bootcount value range*/
+	bootcount = bootcount_load();
+	bootcount++; //The bootcount value has not been incremented yet, since bootcount_inc() will be called later.
+	fastboot_bootlimit = env_get_ulong("fastboot_bootlimit", 10, 20);
+	if(fastboot_bootlimit > 20) fastboot_bootlimit = 20;
+	if(fastboot_bootlimit < 5) fastboot_bootlimit = 5;
+	bootlimit = fastboot_bootlimit + 5;
+
+	if(bootcount < fastboot_bootlimit)
+	{
+		/* Normal mode
+		 * - RGB led=WHITE
+		 * - keyboard backlight=ON
+		 * - lcd backlight=OFF
+		 */
+
+		dm_gpio_set_value(&bl_en_gpio, 0);
+		dm_gpio_set_value(&kbd_en_gpio, 1);
+		dm_gpio_set_value(&bck_dimm_gpio, 1);
+		run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0xff; i2c mw 62 4 0xff; i2c mw 62 8 0x2a", 0);
+	} else 	if(bootcount > bootlimit)
+	{
+		/* ConfigOS mode
+		 * - RGB led=RED
+		 * - keyboard backlight=OFF
+		 * - lcd backlight=BLINK (2s)
+		 */
+
+		dm_gpio_set_value(&bl_en_gpio, 1);
+		dm_gpio_set_value(&kbd_en_gpio, 0);
+		dm_gpio_set_value(&bck_dimm_gpio, 0);
+		run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x00; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
+		for(int i=0; i<5; i++)
+		{
+			dm_gpio_set_value(&bck_dimm_gpio, 1);
+			mdelay(200);
+			dm_gpio_set_value(&bck_dimm_gpio, 0);
+			mdelay(200);
+		}
+	}
+	else
+	{
+		/* Warning mode
+		 * - RGB led=ORANGE
+		 * - keyboard backlight=OFF
+		 * - lcd backlight=OFF
+		 */
+
+		dm_gpio_set_value(&bl_en_gpio, 0);
+		dm_gpio_set_value(&kbd_en_gpio, 0);
+		dm_gpio_set_value(&bck_dimm_gpio, 0);
+		run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x8b; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
+	}
+}
+#endif
+
 /*
  * Read I2C SEEPROM infos and set env. variables accordingly
  */
@@ -439,10 +537,12 @@ int board_late_init(void)
   else if(hwcode==NS02WU20_VAL)
   {
     env_set("board_name", "ns02_wu20"); 
+	ns02_wuxx_fixup();
   }
   else if(hwcode==NS02WU07_VAL)
   {
     env_set("board_name", "ns02_wu07"); 
+	ns02_wuxx_fixup();
   }
   else
   {

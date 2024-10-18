@@ -101,6 +101,9 @@
 	
 	ns02_rst {
           soft_rst_gpio = <&gpioz 5 GPIO_ACTIVE_HIGH>;
+          kbd_en_gpio = <&gpiog 5 GPIO_ACTIVE_HIGH>;
+          bck_dimm_gpio = <&gpioa 5 GPIO_ACTIVE_HIGH>;
+          bl_en_gpio = <&gpiof 2 GPIO_ACTIVE_HIGH>;
 	};
 
     regulators {
