@@ -61,6 +61,12 @@ static iomux_v3_cfg_t const wdog_pads[] = {
 #define US04_DXEN0_GPIO   IMX_GPIO_NR(1, 1)
 #define US04_RXEN0_GPIO   IMX_GPIO_NR(1, 3)
 #define US04_SDCD_GPIO    IMX_GPIO_NR(2, 12)
+
+#define US04_WUXX_KBDEN_GPIO IMX_GPIO_NR(4, 24)
+#define US04_WUXX_DIMM_GPIO  IMX_GPIO_NR(5, 3)
+#define US04_WUXX_BLEN_GPIO  IMX_GPIO_NR(5, 5)
+#define US04_WUXX_ENVDD_GPIO  IMX_GPIO_NR(5, 4)
+
 #define US04_RST_GPIO_PAD_CTRL (PAD_CTL_PUE | PAD_CTL_DSE1)
 
 static iomux_v3_cfg_t const us04_rst_pads[] = {
@@ -68,6 +74,86 @@ static iomux_v3_cfg_t const us04_rst_pads[] = {
     IMX8MM_PAD_GPIO1_IO01_GPIO1_IO1 | MUX_PAD_CTRL(US04_RST_GPIO_PAD_CTRL),
     IMX8MM_PAD_GPIO1_IO03_GPIO1_IO3 | MUX_PAD_CTRL(US04_RST_GPIO_PAD_CTRL),
 };
+
+static iomux_v3_cfg_t const wuxx_pads[] = {
+	IMX8MM_PAD_SPDIF_EXT_CLK_GPIO5_IO5 | MUX_PAD_CTRL(UART_PAD_CTRL),
+	IMX8MM_PAD_SPDIF_TX_GPIO5_IO3 | MUX_PAD_CTRL(UART_PAD_CTRL),
+	IMX8MM_PAD_SAI2_TXFS_GPIO4_IO24 | MUX_PAD_CTRL(UART_PAD_CTRL),
+	IMX8MM_PAD_SPDIF_RX_GPIO5_IO4 | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+
+/*
+ * Specific WUxx board fixup sequence, to drive the front LED and the keybd/lcd backlight
+ * according with the bootcounter range
+ */
+static void wuxx_fixup(void)
+{
+    unsigned long bootcount;
+    unsigned long bootlimit;
+    unsigned long fastboot_bootlimit = 20;
+
+    /* Get the gpio lines to handle the keyboard and lcd backlight */
+	imx_iomux_v3_setup_multiple_pads(wuxx_pads, ARRAY_SIZE(wuxx_pads));
+
+    gpio_request(US04_WUXX_KBDEN_GPIO, "US04_WUXX_KBDEN_GPIO");
+    gpio_request(US04_WUXX_DIMM_GPIO, "US04_WUXX_DIMM_GPIO");
+    gpio_request(US04_WUXX_BLEN_GPIO, "US04_WUXX_BLEN_GPIO");
+    gpio_request(US04_WUXX_ENVDD_GPIO, "US04_WUXX_ENVDD_GPIO");
+
+    /* Perform the required actions, based on the bootcount value range*/
+    bootcount = bootcount_load();
+    bootcount++; //The bootcount value has not been incremented yet, since bootcount_inc() will be called later.
+    fastboot_bootlimit = env_get_ulong("fastboot_bootlimit", 10, 20);
+    if(fastboot_bootlimit > 20) fastboot_bootlimit = 20;
+    if(fastboot_bootlimit < 5) fastboot_bootlimit = 5;
+    bootlimit = fastboot_bootlimit + 5;
+    if(bootcount < fastboot_bootlimit)
+    {
+        /* Normal mode
+         * - RGB led=WHITE
+         * - keyboard backlight=ON
+         * - lcd backlight=OFF
+         */
+        gpio_direction_output(US04_WUXX_KBDEN_GPIO, 1);
+        gpio_direction_output(US04_WUXX_DIMM_GPIO, 1);
+        gpio_direction_output(US04_WUXX_BLEN_GPIO, 0);
+        gpio_direction_output(US04_WUXX_ENVDD_GPIO, 0);
+        run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0xff; i2c mw 62 4 0xff; i2c mw 62 8 0x2a", 0);
+    } else 	if(bootcount > bootlimit)
+    {
+        /* ConfigOS mode
+        * - RGB led=RED
+        * - keyboard backlight=OFF
+        * - lcd backlight=BLINK (2s)
+        */
+        gpio_direction_output(US04_WUXX_KBDEN_GPIO, 0);
+        gpio_direction_output(US04_WUXX_DIMM_GPIO, 0);
+        gpio_direction_output(US04_WUXX_BLEN_GPIO, 1);
+        gpio_direction_output(US04_WUXX_ENVDD_GPIO, 1);
+        run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x00; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
+        for(int i=0; i<5; i++)
+        {
+            gpio_set_value(US04_WUXX_DIMM_GPIO,1);
+            mdelay(200);
+            gpio_set_value(US04_WUXX_DIMM_GPIO,0);
+            mdelay(200);
+        }
+        gpio_direction_output(US04_WUXX_ENVDD_GPIO, 0);
+    }
+    else
+    {
+        /* Warning mode
+         * - RGB led=ORANGE
+         * - keyboard backlight=OFF
+         * - lcd backlight=OFF
+         */
+        gpio_direction_output(US04_WUXX_KBDEN_GPIO, 0);
+        gpio_direction_output(US04_WUXX_DIMM_GPIO, 0);
+        gpio_direction_output(US04_WUXX_BLEN_GPIO, 0);
+        gpio_direction_output(US04_WUXX_ENVDD_GPIO, 0);
+        run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x8b; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
+    }
+}
 
 #ifdef CONFIG_CMD_I2CHWCFG
 void ena_rs232phy(void)
@@ -401,6 +487,9 @@ int board_late_init(void)
     {
         env_set("board_name", "us04_wu10"); 
 		env_set("fdtfile", "us04_wu10.dtb");
+#if defined(CONFIG_TARGET_IMX8MM_US04)
+        wuxx_fixup();
+#endif
     }
     else if((hwcode==US04EX705M_VAL) || (hwcode==US04EXW705M_VAL))
 	{
