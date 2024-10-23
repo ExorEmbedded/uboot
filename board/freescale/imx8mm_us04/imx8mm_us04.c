@@ -118,7 +118,7 @@ static void wuxx_fixup(void)
         gpio_direction_output(US04_WUXX_DIMM_GPIO, 1);
         gpio_direction_output(US04_WUXX_BLEN_GPIO, 0);
         gpio_direction_output(US04_WUXX_ENVDD_GPIO, 0);
-        run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0xff; i2c mw 62 4 0xff; i2c mw 62 8 0x2a", 0);
+        run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0x00; i2c mw 62 3 0x00; i2c mw 62 4 0x32; i2c mw 62 8 0x2a", 0);
     } else 	if(bootcount > bootlimit)
     {
         /* ConfigOS mode
@@ -151,7 +151,7 @@ static void wuxx_fixup(void)
         gpio_direction_output(US04_WUXX_DIMM_GPIO, 0);
         gpio_direction_output(US04_WUXX_BLEN_GPIO, 0);
         gpio_direction_output(US04_WUXX_ENVDD_GPIO, 0);
-        run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x8b; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
+        run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x20; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
     }
 }
 
