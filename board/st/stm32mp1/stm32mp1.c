@@ -285,7 +285,7 @@ static void ns02_wuxx_fixup(void)
 	if(bootcount < fastboot_bootlimit)
 	{
 		/* Normal mode
-		 * - RGB led=WHITE
+		 * - RGB led=BLUE
 		 * - keyboard backlight=ON
 		 * - lcd backlight=OFF
 		 */
@@ -293,7 +293,7 @@ static void ns02_wuxx_fixup(void)
 		dm_gpio_set_value(&bl_en_gpio, 0);
 		dm_gpio_set_value(&kbd_en_gpio, 1);
 		dm_gpio_set_value(&bck_dimm_gpio, 1);
-		run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0xff; i2c mw 62 4 0xff; i2c mw 62 8 0x2a", 0);
+		run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0x00; i2c mw 62 3 0x00; i2c mw 62 4 0x32; i2c mw 62 8 0x2a", 0);
 	} else 	if(bootcount > bootlimit)
 	{
 		/* ConfigOS mode
@@ -325,7 +325,7 @@ static void ns02_wuxx_fixup(void)
 		dm_gpio_set_value(&bl_en_gpio, 0);
 		dm_gpio_set_value(&kbd_en_gpio, 0);
 		dm_gpio_set_value(&bck_dimm_gpio, 0);
-		run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x8b; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
+		run_command("i2c dev 0; i2c mw 62 0 0; i2c mw 62 1 1; i2c mw 62 2 0xff; i2c mw 62 3 0x20; i2c mw 62 4 0x00; i2c mw 62 8 0x2a", 0);
 	}
 }
 #endif
