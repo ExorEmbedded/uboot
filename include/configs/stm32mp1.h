@@ -362,11 +362,10 @@
 #define CFG_SYS_FAST_BOOTCOMMAND \
 	"setenv verify n; " \
 	"setenv mmcdev 1; " \
+	"run findfdt; " \
+	"setenv bootpart 1:3; " \
 	"setenv mmcroot /dev/mmcblk1p3 ro; " \
-	"run mmcargs; " \
-	"load mmc ${bootpart} ${loadaddr} ${bootdir}/${bootfile}; " \
-	"load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}; " \
-	"bootz ${loadaddr} - ${fdtaddr}; "
+	"if run loadimage; then run mmcloados;fi"
 
 #define CFG_SYS_ALT_BOOTCOMMAND \
 	"bootcount reset; " \

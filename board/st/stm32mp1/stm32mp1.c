@@ -142,9 +142,15 @@ int board_vddcore_set(u32 opp_voltage_mv)
 #define RCC_PLLNFRACR_FRACV_MASK  GENMASK(15, 3)
 #define RCC_PLLNFRACR_FRACLE      BIT(16)
 
-static int _exor_fastboot;
+static int _exor_fastboot = -1;
 int exor_is_fastboot(void)
 {
+	if (_exor_fastboot >= 0)
+		return _exor_fastboot;
+
+	char* s = env_get("fastboot");
+	_exor_fastboot = ((s != NULL) && (strcmp(s, "y") == 0));
+
 	return _exor_fastboot;
 }
 
@@ -553,11 +559,11 @@ int board_late_init(void)
   /* Set CPU frequency to 800Mhz, if target is allowed and CPU supports this 
    */
   f_800Mhz_mpu = 0;          // By default do not allow targets to run at 800Mhz
-  if(hwcode==NS02EK435_VAL)
+  if((hwcode==NS02EK435_VAL) || exor_is_fastboot())
 	  f_800Mhz_mpu = 1;      //EK435 target is allowed to run at 800Mhz
-  
+
   if(f_800Mhz_mpu)           //If target is allowed to run at 800Mhz and CPU is capable of such speed...
-	  if(get_cpu_type() == CPU_STM32MP157Fxx) //...set MPU clk to 800Mhz
+	  if((get_cpu_type() == CPU_STM32MP157Fxx) || (get_cpu_type() == CPU_STM32MP157Cxx)) //...set MPU clk to 800Mhz
 	  {
 		  puts ("Set 800Mhz MPU clock.\n");
 		  if(! board_vddcore_set(1350))
