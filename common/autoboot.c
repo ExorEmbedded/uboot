@@ -27,7 +27,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* Stored value of bootdelay, used by autoboot_command() */
 static int stored_bootdelay;
-extern int exor_is_fastboot(void);
 
 #if defined(CONFIG_AUTOBOOT_KEYED)
 #if defined(CONFIG_AUTOBOOT_STOP_STR_SHA256)
@@ -291,24 +290,12 @@ static void process_fdt_options(const void *blob)
 const char *bootdelay_process(void)
 {
 	char *s;
-	int bootdelay = 0;
+	int bootdelay;
 
 	bootcount_inc();
 
-	if (!exor_is_fastboot())
-	{
-		s = env_get("bootdelay");
-		bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
-	}
-	else
-	{
-		unsigned long bootcount = bootcount_load();
-		if (bootcount > 3)
-		{
-			printf("Increasing bootdelay because bootcount is %lu\n", bootcount);
-			bootdelay = 1;
-		}
-	}
+	s = env_get("bootdelay");
+	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 
 #ifdef CONFIG_OF_CONTROL
 	if (!exor_is_fastboot())
@@ -333,11 +320,7 @@ const char *bootdelay_process(void)
 	else
 	{
 		if (exor_is_fastboot())
-		{
 			s = env_get("fastbootcmd");
-			if ((s == NULL) || (strlen(s) == 0))
-				s = env_get("bootcmd");
-		}
 		else
 			s = env_get("bootcmd");
 	}

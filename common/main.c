@@ -16,7 +16,6 @@
  * Board-specific Platform code can reimplement show_boot_progress () if needed
  */
 __weak void show_boot_progress(int val) {}
-extern int exor_is_fastboot(void);
 
 static void run_preboot_environment_command(void)
 {

@@ -499,8 +499,6 @@ static int initr_enable_interrupts(void)
 #endif
 
 #ifdef CONFIG_CMD_NET
-extern int exor_is_fastboot(void);
-
 static int initr_ethaddr(void)
 {
 	if (exor_is_fastboot())
